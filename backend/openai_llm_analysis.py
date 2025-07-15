@@ -18,6 +18,8 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 from dotenv import load_dotenv
 import os
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 load_dotenv()
 # Configure logging
@@ -523,7 +525,7 @@ Return as JSON:
         }
     
     def create_detailed_report(self, analysis_results: Dict[str, Any]) -> str:
-        """Create a detailed, actionable report."""
+        """Create a detailed, actionable report in plain text."""
         
         themes = analysis_results['themes']
         issues = analysis_results['issues']
@@ -533,7 +535,7 @@ Return as JSON:
         
         lines = []
         lines.append("=" * 80)
-        lines.append("📊 OPENAI-ENHANCED PRODUCT REVIEW ANALYSIS")
+        lines.append("AI-ENHANCED PRODUCT REVIEW ANALYSIS")
         lines.append("=" * 80)
         lines.append(f"Product: {metadata['product_type'].title()}")
         lines.append(f"Reviews Analyzed: {metadata['total_reviews']}")
@@ -544,21 +546,21 @@ Return as JSON:
         lines.append("")
         
         # Executive Summary
-        lines.append("📋 EXECUTIVE SUMMARY")
+        lines.append("EXECUTIVE SUMMARY")
         lines.append("-" * 40)
-        lines.append(insights.get('executive_summary', 'Analysis completed'))
+        lines.append(insights.get('executive_summary', 'Analysis completed.'))
         lines.append("")
         
         # Key Insights
         if insights.get('key_insights'):
-            lines.append("💡 KEY INSIGHTS")
+            lines.append("KEY INSIGHTS")
             lines.append("-" * 40)
             for insight in insights['key_insights']:
-                lines.append(f"• {insight}")
+                lines.append(f"- {insight}")
             lines.append("")
         
         # Key Metrics
-        lines.append("📈 KEY METRICS")
+        lines.append("KEY METRICS")
         lines.append("-" * 40)
         lines.append(f"Average Rating: {metrics['average_rating']:.1f}/5")
         lines.append(f"Total Reviews: {metrics['total_reviews']}")
@@ -571,32 +573,31 @@ Return as JSON:
         total_sentiment = sum(metrics['sentiment_distribution'].values())
         for sentiment, count in metrics['sentiment_distribution'].items():
             percentage = (count / total_sentiment * 100) if total_sentiment > 0 else 0
-            emoji = "😊" if "pos" in sentiment.lower() else "😞" if "neg" in sentiment.lower() else "😐"
-            lines.append(f"  {emoji} {sentiment}: {count} ({percentage:.1f}%)")
+            lines.append(f"  {sentiment.title()}: {count} ({percentage:.1f}%)")
         lines.append("")
         
         # Top Issues (LLM-powered)
-        lines.append("🔴 TOP ISSUES IDENTIFIED (AI-POWERED)")
+        lines.append("TOP ISSUES IDENTIFIED")
         lines.append("-" * 40)
         if issues:
             for i, issue in enumerate(issues[:5], 1):
                 lines.append(f"{i}. {issue['issue_name'].replace('_', ' ').title()}")
                 lines.append(f"   Description: {issue['description']}")
-                lines.append(f"   Frequency: {issue['frequency']} mentions")
+                lines.append(f"   Frequency: {issue['frequency']} mention(s)")
                 lines.append(f"   Severity: {issue['severity'].title()}")
                 lines.append(f"   Example: \"{issue['example_quote']}\"")
                 lines.append("")
         else:
-            lines.append("No significant issues identified")
+            lines.append("No significant issues identified.")
             lines.append("")
         
         # Theme Analysis (LLM-powered)
-        lines.append("🎯 THEME ANALYSIS (AI-POWERED)")
+        lines.append("THEME ANALYSIS")
         lines.append("-" * 40)
         
         if themes.get('themes'):
             for theme_name, theme_data in themes['themes'].items():
-                lines.append(f"📌 {theme_name.replace('_', ' ').title()}")
+                lines.append(f"{theme_name.replace('_', ' ').title()}")
                 lines.append(f"   Mentions: {theme_data['mentions']}")
                 lines.append(f"   Sentiment: {theme_data['sentiment'].title()}")
                 lines.append(f"   Confidence: {theme_data['confidence']:.2f}")
@@ -609,20 +610,19 @@ Return as JSON:
                 lines.append("")
         
         # Recommendations (LLM-powered)
-        lines.append("💡 AI-POWERED RECOMMENDATIONS")
+        lines.append("AI-POWERED RECOMMENDATIONS")
         lines.append("-" * 40)
         
         if insights.get('recommendations'):
             for i, rec in enumerate(insights['recommendations'], 1):
-                priority_emoji = "🔥" if rec['priority'] == 'high' else "⚡" if rec['priority'] == 'medium' else "💡"
-                lines.append(f"{i}. {priority_emoji} {rec['recommendation']}")
+                lines.append(f"{i}. {rec['recommendation']}")
                 lines.append(f"   Priority: {rec['priority'].title()}")
                 lines.append(f"   Impact: {rec['impact']}")
                 lines.append(f"   Rationale: {rec['rationale']}")
                 lines.append("")
         
         # Analysis Statistics
-        lines.append("📊 ANALYSIS STATISTICS")
+        lines.append("ANALYSIS STATISTICS")
         lines.append("-" * 40)
         lines.append(f"Tokens Used: {metadata['token_usage']['total_tokens']:,}")
         lines.append(f"Estimated Cost: ${metadata['token_usage']['estimated_cost']:.4f}")
@@ -630,7 +630,7 @@ Return as JSON:
         lines.append("")
         
         lines.append("=" * 80)
-        lines.append("✅ AI-Enhanced Analysis Complete")
+        lines.append("Analysis Complete")
         lines.append("=" * 80)
         
         return "\n".join(lines)
@@ -693,6 +693,53 @@ def parse_reviews_from_file(file_path: str) -> Optional[List[Dict]]:
     except Exception as e:
         logger.error(f"Error parsing HTML: {e}")
         return None
+def parse_reviews_from_html_string(html_str: str) -> Optional[List[Dict]]:
+    """Parse reviews from HTML string with enhanced error handling."""
+    try:
+        soup = BeautifulSoup(html_str, 'html.parser')
+        reviews = []
+        
+        # Try multiple selectors (same logic as your existing function)
+        selectors = ['li.review-item', '.review-item', '.review', '[data-testid="review"]']
+        
+        review_elements = []
+        for selector in selectors:
+            elements = soup.select(selector)
+            if elements:
+                review_elements = elements
+                break
+        
+        if not review_elements:
+            logger.warning("No review elements found")
+            return []
+        
+        for element in review_elements:
+            review_data = {'review_text': '', 'review_rating': None}
+            
+            # Extract text
+            text_selectors = ['p.pre-white-space', '.review-text', 'p', '.content']
+            for selector in text_selectors:
+                text_element = element.select_one(selector)
+                if text_element:
+                    review_data['review_text'] = text_element.get_text(strip=True)
+                    break
+            
+            # Extract rating
+            rating_element = element.select_one('p.visually-hidden')
+            if rating_element:
+                rating_match = re.search(r'Rated (\d(?:\.\d)?)', rating_element.text)
+                if rating_match:
+                    review_data['review_rating'] = float(rating_match.group(1))
+            
+            if review_data['review_text']:
+                reviews.append(review_data)
+        
+        logger.info(f"Successfully parsed {len(reviews)} reviews")
+        return reviews
+    
+    except Exception as e:
+        logger.error(f"Error parsing HTML: {e}")
+        return None
 
 def main():
     """Main execution function."""
@@ -703,7 +750,7 @@ def main():
             openai_api_key = input("Enter your OpenAI API key: ").strip()
         
         if not openai_api_key:
-            print("❌ OpenAI API key is required")
+            print("OpenAI API key is required.")
             return
         
         # Download required NLTK data
@@ -716,10 +763,10 @@ def main():
         # Parse reviews
         reviews = parse_reviews_from_file('sample.html')
         if not reviews:
-            print("❌ No reviews found or error parsing file.")
+            print("No reviews found or error parsing file.")
             return
         
-        print(f"📚 Found {len(reviews)} reviews to analyze...")
+        print(f"Found {len(reviews)} reviews to analyze...")
         
         # Get product type
         product_type = input("Enter product type (e.g., 'gaming controller', 'headphones', 'laptop'): ").strip()
@@ -727,15 +774,15 @@ def main():
             product_type = "gaming controller"
         
         # Initialize hybrid analyzer
-        print("🤖 Initializing OpenAI-enhanced analyzer...")
+        print("Initializing AI-enhanced analyzer...")
         analyzer = OpenAIHybridReviewAnalyzer(openai_api_key)
         
         # Generate comprehensive analysis
-        print("🔍 Running AI-enhanced analysis...")
+        print("Running AI-enhanced analysis...")
         analysis_results = analyzer.generate_comprehensive_analysis(reviews, product_type)
         
         # Generate and display report
-        print("📊 Generating detailed report...")
+        print("Generating detailed report...")
         report = analyzer.create_detailed_report(analysis_results)
         
         print("\n" + report)
@@ -744,12 +791,60 @@ def main():
         with open('openai_enhanced_analysis.json', 'w', encoding='utf-8') as f:
             json.dump(analysis_results, f, indent=2, ensure_ascii=False, default=str)
         
-        print(f"\n✅ Analysis complete! Results exported to openai_enhanced_analysis.json")
-        print(f"💰 Total cost: ${analysis_results['analysis_metadata']['token_usage']['estimated_cost']:.4f}")
+        print(f"\nAnalysis complete! Results exported to openai_enhanced_analysis.json")
+        print(f"Total cost: ${analysis_results['analysis_metadata']['token_usage']['estimated_cost']:.4f}")
         
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
-        print(f"❌ Analysis failed: {e}")
+        print(f"Analysis failed: {e}")
+
+
+app = Flask(__name__)
+CORS(app)  # Enable CORS for React frontend
+
+@app.route('/api/analyze-html', methods=['POST'])
+def analyze_html():
+    try:
+        # Get HTML from request
+        data = request.get_json()
+        html_content = data.get('html', '')
+        
+        if not html_content:
+            return jsonify({'error': 'No HTML content provided'}), 400
+        
+        # Parse reviews from HTML string
+        reviews = parse_reviews_from_html_string(html_content)
+        
+        if not reviews:
+            return jsonify({'error': 'No reviews found in HTML'}), 400
+        
+        # Get product type (or use default)
+        product_type = data.get('product_type', 'product')
+        
+        # Initialize analyzer
+        openai_api_key = os.getenv('OPENAI_API_KEY')
+        if not openai_api_key:
+            return jsonify({'error': 'OpenAI API key not configured'}), 500
+        
+        analyzer = OpenAIHybridReviewAnalyzer(openai_api_key)
+        
+        # Generate analysis
+        analysis_results = analyzer.generate_comprehensive_analysis(reviews, product_type)
+        
+        # Return results in format expected by React component
+        return jsonify({
+            'reviews': [r['review_text'] for r in reviews],
+            'sentiment': analysis_results['metrics']['sentiment_distribution'],
+            'themes': analysis_results['themes'],
+            'issues': analysis_results['issues'],
+            'insights': analysis_results['insights'],
+            'summary': analysis_results['insights'].get('executive_summary', ''),
+            'analysis_metadata': analysis_results['analysis_metadata']
+        })
+        
+    except Exception as e:
+        logger.error(f"API error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True, port=5000)
