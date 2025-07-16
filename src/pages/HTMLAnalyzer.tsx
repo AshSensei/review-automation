@@ -6,6 +6,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useState, useCallback, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Lightbulb, X } from 'lucide-react';
+// (Inside your HTMLAnalyzer.tsx file)
+ import { FadeTransition } from '../components/ui/FadeTransition'; // Adjust path as needed
+import { LoadingCarousel } from "../components/ui/LoadingCarousel";
 
 // Types and Interfaces
 interface IssueObject {
@@ -96,7 +99,7 @@ const useStatusCycling = () => {
         timestamp: Date.now() 
       }]);
       currentIndex = (currentIndex + 1) % statusMessages.length;
-    }, 1200);
+    }, 3000);
     
     setIntervalId(interval);
   }, []);
@@ -156,17 +159,21 @@ const StatusIndicator = ({ updates }: { updates: StatusUpdate[] }) => (
       <CardTitle>Analysis in Progress</CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="space-y-2">
-        {updates.map((update, index) => (
-          <div key={`${update.timestamp}-${index}`} className="flex items-center gap-2 p-2 rounded-md bg-blue-50">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" aria-hidden="true"></div>
-            <span className="text-sm text-blue-800">{update.message}</span>
-          </div>
-        ))}
+      {/* We only need one div now, which will be animated */}
+      <div className="flex items-center gap-2 p-2 rounded-md bg-blue-50">
+        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" aria-hidden="true"></div>
+        
+        <FadeTransition animationKey={updates[0]?.message || ''}>
+          <span className="text-sm text-blue-800">
+            {updates[0]?.message}
+          </span>
+        </FadeTransition>
+
       </div>
     </CardContent>
   </Card>
 );
+
 
 const SentimentCard = ({ sentiment }: { sentiment: AnalysisResults['sentiment'] }) => {
   if (!sentiment) return null;
@@ -434,8 +441,13 @@ function HTMLAnalyzer() {
         </Card>
       </section>
 
-      {loading && statusUpdates.length > 0 && (
-        <StatusIndicator updates={statusUpdates} />
+      {loading && (
+        <div className="my-6">
+          {/* The useStatusCycling hook returns an array with one item.
+            We pass that single item to the carousel.
+          */}
+          <LoadingCarousel status={statusUpdates[0] || null} />
+        </div>
       )}
 
       {results && (
