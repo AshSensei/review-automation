@@ -31,11 +31,20 @@ function Home() {
               <a>HTML Analyzer</a>
             </NavigationMenuLink>
           </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              asChild
+              onClick={() => navigate("/competitor-analyzer")}
+              className="cursor-pointer"
+            >
+              <a>Competitor Analyzer</a>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
 
       <h1 className="text-4xl font-bold mb-4">Review Analyzer</h1>
-    
+
       <Card>
         <CardHeader>
           <CardTitle>Manual HTML Analyzer</CardTitle>
@@ -46,6 +55,20 @@ function Home() {
           </p>
           <Button onClick={() => navigate("/html-analyzer")}>
             Open HTML Analyzer
+          </Button>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Competitor Analyzer</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4">
+            Compare your product with a competitor's product by cross analyzing
+            reviews.
+          </p>
+          <Button onClick={() => navigate("/competitor-analyzer")}>
+            Open Competitor Analyzer
           </Button>
         </CardContent>
       </Card>
