@@ -199,7 +199,7 @@ const KeyPhrasePopover = ({
     <Popover>
       <PopoverTrigger asChild>
         <button className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs transition-colors cursor-pointer border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
-          {phrase}
+          {formatIssueName(phrase)}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-80 max-h-96 overflow-y-auto">
@@ -703,7 +703,7 @@ function HTMLAnalyzer() {
                     if (typeof issue === 'string') {
                       return (
                         <div key={index} className="p-4 border-l-4 border-red-500 bg-red-50 rounded-r-md">
-                          {issue}
+                          {formatIssueName(issue)}
                         </div>
                       );
                     }
