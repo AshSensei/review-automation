@@ -72,6 +72,19 @@ function Home() {
           </Button>
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Feature Analyzer</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4">
+            Analyze a specific feature of your product through analyzing reviews.
+          </p>
+          <Button onClick={() => navigate("/feature-analyzer")}>
+            Open Feature Analyzer
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
