@@ -4,10 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback} from "react";
 import { ThumbsUp, ThumbsDown, Lightbulb, X } from 'lucide-react';
 // (Inside your HTMLAnalyzer.tsx file)
- import { FadeTransition } from '../components/ui/FadeTransition'; // Adjust path as needed
 import { LoadingCarousel } from "../components/ui/LoadingCarousel";
 import {
   Popover,
@@ -165,26 +164,7 @@ const findReviewsWithPhrase = (phrase: string, reviews: string[]): string[] => {
 };
 
 // Components
-const StatusIndicator = ({ updates }: { updates: StatusUpdate[] }) => (
-  <Card className="mb-6">
-    <CardHeader>
-      <CardTitle>Analysis in Progress</CardTitle>
-    </CardHeader>
-    <CardContent>
-      {/* We only need one div now, which will be animated */}
-      <div className="flex items-center gap-2 p-2 rounded-md bg-blue-50">
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" aria-hidden="true"></div>
-        
-        <FadeTransition animationKey={updates[0]?.message || ''}>
-          <span className="text-sm text-blue-800">
-            {updates[0]?.message}
-          </span>
-        </FadeTransition>
 
-      </div>
-    </CardContent>
-  </Card>
-);
 
 const KeyPhrasePopover = ({ 
   phrase, 
@@ -324,7 +304,7 @@ const ThemeButton = ({
 );
 
 const RecommendationCard = ({ recommendation, index }: { recommendation: Recommendation; index: number }) => (
-  <article className="border rounded-lg p-4">
+  <article className="border rounded-lg p-4" key={index}>
     <header className="flex items-start justify-between mb-3">
       <h3 className="font-semibold text-gray-800 flex-1">{recommendation.recommendation}</h3>
       <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(recommendation.priority)}`}>

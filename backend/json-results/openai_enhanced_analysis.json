@@ -1,0 +1,210 @@
+{
+  "themes": {
+    "themes": {
+      "button_responsiveness": {
+        "mentions": 4,
+        "sentiment": "positive",
+        "confidence": 0.85,
+        "key_phrases": [
+          "best response times",
+          "very responsive",
+          "works great"
+        ],
+        "example_quote": "This controller beats them all without any doubt! This controller has the best response times I have ever witnessed."
+      },
+      "stick_drift": {
+        "mentions": 3,
+        "sentiment": "positive",
+        "confidence": 0.8,
+        "key_phrases": [
+          "no stick drift",
+          "getting worn out"
+        ],
+        "example_quote": "None of them have had any stick drift after a year of use."
+      },
+      "customization_options": {
+        "mentions": 4,
+        "sentiment": "positive",
+        "confidence": 0.9,
+        "key_phrases": [
+          "customization through the controller",
+          "easy to edit"
+        ],
+        "example_quote": "Loving the customization through the controller LCD screen."
+      },
+      "software_bugs": {
+        "mentions": 3,
+        "sentiment": "negative",
+        "confidence": 0.75,
+        "key_phrases": [
+          "buggy software",
+          "finicky app"
+        ],
+        "example_quote": "The app for it though is super finicky and doesn’t work properly."
+      },
+      "build_quality": {
+        "mentions": 2,
+        "sentiment": "neutral",
+        "confidence": 0.6,
+        "key_phrases": [
+          "worn out",
+          "great controller"
+        ],
+        "example_quote": "I’m going to have to use my warranty because the left stick... is getting worn out."
+      },
+      "ergonomics": {
+        "mentions": 3,
+        "sentiment": "positive",
+        "confidence": 0.8,
+        "key_phrases": [
+          "feels great in the hands",
+          "comfortable"
+        ],
+        "example_quote": "Feels great in the hands and doesn’t take long getting used to the bottom buttons."
+      },
+      "battery_life": {
+        "mentions": 2,
+        "sentiment": "positive",
+        "confidence": 0.7,
+        "key_phrases": [
+          "battery life is good"
+        ],
+        "example_quote": "It’s not bad, battery life is good and the connection is really stable."
+      },
+      "connectivity": {
+        "mentions": 4,
+        "sentiment": "positive",
+        "confidence": 0.85,
+        "key_phrases": [
+          "connects well",
+          "stable connection"
+        ],
+        "example_quote": "Connects well and is easy to swap between devices."
+      },
+      "design_aesthetics": {
+        "mentions": 3,
+        "sentiment": "positive",
+        "confidence": 0.8,
+        "key_phrases": [
+          "looks cool",
+          "great controller"
+        ],
+        "example_quote": "The controller works great, looks cool."
+      },
+      "warranty_issues": {
+        "mentions": 2,
+        "sentiment": "negative",
+        "confidence": 0.65,
+        "key_phrases": [
+          "use my warranty",
+          "getting worn out"
+        ],
+        "example_quote": "I’m going to have to use my warranty because the left stick... is getting worn out."
+      }
+    },
+    "discovered_themes": [
+      "button_responsiveness",
+      "stick_drift",
+      "customization_options",
+      "software_bugs",
+      "build_quality",
+      "ergonomics",
+      "battery_life",
+      "connectivity",
+      "design_aesthetics",
+      "warranty_issues"
+    ],
+    "sample_size": 15
+  },
+  "issues": [
+    {
+      "issue_name": "stick_wear",
+      "description": "The left stick is wearing out and creating grooves, affecting smooth rotation.",
+      "frequency": 1,
+      "severity": "medium",
+      "example_quote": "the left stick under the thumb pad... is getting worn out creating grooves making it not smooth when rotating.",
+      "type": "other",
+      "review_count": 3
+    },
+    {
+      "issue_name": "button_quality",
+      "description": "Not all buttons function properly or feel consistent.",
+      "frequency": 1,
+      "severity": "medium",
+      "example_quote": "I don’t like that not all of the buttons are...",
+      "type": "build_quality",
+      "review_count": 3
+    }
+  ],
+  "metrics": {
+    "total_reviews": 20,
+    "average_rating": 4.05,
+    "rating_distribution": {
+      "5.0": 10,
+      "4.0": 5,
+      "3.0": 2,
+      "1.0": 1,
+      "2.0": 2
+    },
+    "average_review_length": 1750.15,
+    "sentiment_distribution": {
+      "positive": 11,
+      "neutral": 5,
+      "negative": 4
+    },
+    "reading_ease_score": 68.68712284939211,
+    "average_sentiment_confidence": 0.6567457929253578,
+    "analysis_quality": "standard"
+  },
+  "insights": {
+    "executive_summary": "The gaming controller has received a favorable average rating of 4.0/5, with positive sentiments primarily focused on its button responsiveness, stick drift performance, and customization options. However, concerns regarding software bugs and button quality indicate areas that require immediate attention to enhance overall user satisfaction.",
+    "recommendations": [
+      {
+        "recommendation": "Enhance software stability by addressing reported bugs and improving app functionality.",
+        "priority": "high",
+        "impact": "Improving software stability will likely increase user satisfaction and reduce negative reviews, leading to higher overall ratings.",
+        "rationale": "The presence of software bugs has been a common complaint, affecting user experience and potentially leading to product returns."
+      },
+      {
+        "recommendation": "Investigate and improve the quality of buttons to ensure consistent performance across all units.",
+        "priority": "high",
+        "impact": "Enhancing button quality will directly address user complaints and could lead to increased customer loyalty and reduced warranty claims.",
+        "rationale": "Inconsistent button performance has been highlighted as a significant issue, impacting the overall perception of the product."
+      },
+      {
+        "recommendation": "Monitor and address stick wear issues proactively to prevent long-term performance degradation.",
+        "priority": "medium",
+        "impact": "Addressing stick wear can enhance product longevity and customer satisfaction, reducing the need for warranty claims.",
+        "rationale": "While currently noted by a smaller number of users, stick wear could escalate into a larger issue if not addressed."
+      },
+      {
+        "recommendation": "Consider a redesign or enhancement of the build quality to improve durability and longevity.",
+        "priority": "medium",
+        "impact": "Improving build quality can lead to fewer warranty issues and enhance the product's reputation for durability.",
+        "rationale": "Concerns about wear and tear suggest that users may expect a more robust product."
+      },
+      {
+        "recommendation": "Promote the customization features more prominently in marketing materials to attract a broader audience.",
+        "priority": "low",
+        "impact": "Highlighting customization options can attract users looking for personalized gaming experiences, potentially increasing sales.",
+        "rationale": "Customization is a strong positive theme in reviews, and leveraging this could enhance market appeal."
+      }
+    ],
+    "key_insights": [
+      "Positive sentiment is strong around button responsiveness and customization options.",
+      "Software bugs and button quality are significant pain points that need immediate attention.",
+      "User feedback indicates a need for improved durability, particularly regarding stick wear."
+    ]
+  },
+  "analysis_metadata": {
+    "total_reviews": 20,
+    "analysis_date": "2025-07-09T14:40:01.723512",
+    "product_type": "gaming controller",
+    "model_used": "gpt-4o-mini + local models",
+    "analysis_time_seconds": 28.8,
+    "token_usage": {
+      "total_tokens": 5248,
+      "estimated_cost": 0.0007871999999999998
+    }
+  }
+}

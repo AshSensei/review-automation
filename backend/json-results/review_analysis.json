@@ -1,0 +1,218 @@
+{
+  "total_reviews": 20,
+  "sentiments": [
+    {
+      "rating": 5.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.9675583243370056,
+      "text_length": 974,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 5.0,
+      "sentiment": "NEUTRAL",
+      "confidence": 0.6788173913955688,
+      "text_length": 6738,
+      "ml_sentiment": "neutral"
+    },
+    {
+      "rating": 4.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.8837385177612305,
+      "text_length": 379,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 3.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.537285327911377,
+      "text_length": 1416,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 4.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.9217846393585205,
+      "text_length": 595,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 5.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.9159597754478455,
+      "text_length": 508,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 5.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.9450377821922302,
+      "text_length": 323,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 1.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.9423701763153076,
+      "text_length": 1569,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 5.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.8887022137641907,
+      "text_length": 742,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 4.0,
+      "sentiment": "NEGATIVE",
+      "confidence": 0.5467132329940796,
+      "text_length": 444,
+      "ml_sentiment": "negative"
+    },
+    {
+      "rating": 5.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.9825057983398438,
+      "text_length": 281,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 4.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.4834241569042206,
+      "text_length": 313,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 4.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.9419921636581421,
+      "text_length": 675,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 3.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.8710760474205017,
+      "text_length": 505,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 2.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.45908495783805847,
+      "text_length": 388,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 2.0,
+      "sentiment": "NEGATIVE",
+      "confidence": 0.7805730700492859,
+      "text_length": 1061,
+      "ml_sentiment": "negative"
+    },
+    {
+      "rating": 5.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.8368229866027832,
+      "text_length": 442,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 5.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.8110831379890442,
+      "text_length": 474,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 5.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.9781975150108337,
+      "text_length": 183,
+      "ml_sentiment": "positive"
+    },
+    {
+      "rating": 5.0,
+      "sentiment": "POSITIVE",
+      "confidence": 0.985113263130188,
+      "text_length": 144,
+      "ml_sentiment": "positive"
+    }
+  ],
+  "positive_themes": {
+    "responsiveness_responsive": 4,
+    "ergonomics_comfortable": 2,
+    "build_quality_solid": 2,
+    "value_worth-it": 1,
+    "buttons_clicky": 1,
+    "build_quality_premium": 1
+  },
+  "negative_themes": {
+    "critical_quality_concerns_drift": 5,
+    "critical_deal_breakers_return": 4,
+    "joysticks_stick-drift": 3,
+    "responsiveness_delay": 2,
+    "build_quality_plastic": 2,
+    "critical_user_experience_terrible": 2,
+    "ergonomics_awkward": 1,
+    "responsiveness_lag": 1,
+    "critical_competitive_advantage_compared-to": 1,
+    "critical_competitive_advantage_vs": 1
+  },
+  "llm_insights": [
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. This controller has the best response times i have ever witnessed in a game. It is a great controller for playing games like For Honor where response times really matter.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The product review is based on feedback from users of the iPhone 6 and 6S.",
+    "From the menu you can also customise the controller with lighting and many other features like remapping the back buttons. The original controller i bought at Turtle Beach had an issue with its A button, I contacted Turtle Beach's customer support and they responded next day and had a new controller shipped free of charge.",
+    "Reviewer says he would definitely recomwnd the Tuetle Beach controller. He says he has had no issues with the shoulder buttons after a year of use. He also says the controller has a lot of support from the company and the community.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The only negative I really have for this controller is the placement of the Menu/Start/Select/Whatever you call them.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The controller itself is very comfortable in the hand. It has a slight texture to the grips that keep it in your palm.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The Stealth Ultra is a very comfortable controller. The buttons are a bit \"squishy\" compared to the faced buttons of the Scuf.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The stealth ultra is a very comfortable controller. The only downside to using it wireless is that there is a delay when you want to start.",
+    "The only downside to using it wireless is that there is a delay when you want to start. Sometimes the dongle doesn't connect for up to a minute. I tend to use it wired so I don't run into that issue.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The aim just feels better. The built-in response curves of the sticks just feel right to me.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The only thing I would change on the Scuf would be to make the trigger locks more of a mouse click feel instead of the current slightly squishier feel.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The placement of the rear buttons and their useability really hinges on how your hand lays on them and how easy they are to hit.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. Useability really hinges on how your hand lays on them and how easy they are for you to hit.",
+    "If they are awkward to you after a week of using them, you may want to try something else. You will have to mentally stop to think about what you are doing when trying to hit them. So I highly recommend trying them out and also trying some other controllers.",
+    "Reviewer gives his top tips on how to get the most out of your new iPad Pro controller. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. Focus on actionable insights for product development. Use these tips to help you develop your next iPad Pro.",
+    "Software: The software for the controller is fine for the most part, the issue is that saving the settings back to the controller profile is not as simple as it should be. The images: There are two menus that represent the memory profiles in the software and the onboard memory profiles. They do not always match up.",
+    "Product review feedback can reveal key insights about user experience, product strengths, and areas for improvement. Analyze the following product review feedback and extract key insights. The software industry could definitely use some more focus on user experience and UI/UX.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The lighting is fairly straight though the colors do have some duplication. I would like the option to set custom colors for some of the effects.",
+    "Reviewer says he is very happy with the Stealth Ultra controller. He has not used any of the app control buttons to tie it in with phone or social media apps. He currently has 1 Stealth Ultra that he use on his personal Xbox and PC.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. I currently have 1 Scorch Ultra that I use on my personal Xbox and PC. I also have a Scuf Valor Pro in my office for when I need a change.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. Reviewer: I wish it had the trigger stops of the Scuf controllers, but that doesn't hold it back.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. For more information on the product review process, visit the Reviewing Revelations website.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. We have a family of 4 who are all Xbox and PC, so when we play together we have plenty of options. I highly recommend this controller, especially if you play FPS games.",
+    "Review of Xbox One controller. Reviewer says it's a decent controller for everyday use. However, the software is buggy. Reviewers say it's worth the effort to get the controller set up and working properly. The controller has a 56% battery life and can be charged wirelessly.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The software was a bit of a pain to get working, but once it was setup it seemed to be a decent controller.",
+    "Product review feedback is key to product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The biggest flaw has to do with the hardware. The anti friction rings that are supposed to make the thumb sticks glide nice and smooth are not soft enough.",
+    "Reviewer: \"The thumb sticks do not glide smoothly at all. They feel like they are grinding when you rotate the stick\" \"I really wanted to love this controller, especially for its Hall Effect thumb sticks, but this just isnt it\" \"This is obviously something they wont be able to remedy with a software update\"",
+    "Reviewer says the controller works great, looks cool, connects well and is easy to swap between devices. Reviewer says he will be returning his controller and hopefully Turtle Beach will get this figured out for a future version of the controller. The controller is available in black and white and comes in a range of colors.",
+    "Reviewer: Xbox Elite Series 2 has decent battery life, but not as long as ps5 dualsense edge. Reviewer: Still, good controller, feels nice, and easy to edit on the fly with the screen on the controller.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. Reviewer: Good controller, feels nice, and still has decent battery life.",
+    "Reviewer: Overall this is my favorite controller ever used! Took a bit to get connected and updated but so far loving the controller. Feels great in the hands and doesn't take long getting used to the screen. No signs of any sort of stick drift or shorting.",
+    "Reviewer says the controller feels great in the hands. The clicky buttons and hall effect were a major draw for him. He wishes someone would create a basic controller with good sticks and clicky button. Reviewer: \"I had high hopes for this controller, but the lights are out so far\"",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. Reviewer: The basic controller feels great in my hand, and most of the buttons are a joy to click.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The controller feels great in my hand, and most of the buttons are a joy to click. However, I was extremely disappointed with the following issues: random disconnections (which required me to repair every few minutes), and left stick not calibrated properly.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. Focus on the following three key areas of improvement for the product: \"Authenticity,\" \"quality\" and \"user experience\"",
+    "Reviewer: \"I couldn't recommend this controller to anyone. I have returned the device and will continue to search for a controller that actually works and impresses\" User: \"The only way I'd keep this controller is if it was free\"",
+    "Reviewer: I do not find a single thing that I don't like about this controller. I have gone through countless controllers, sixty dollars a pop. The board calibration software alone is more than 60 dollars. The controller is very responsive and on zero dead zone.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The base acts as a drop-off point for the device. The bottom paddle buttons are extremely sensitive and takes getting used to.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The buttons and sticks are smooth. I don’t like the placement of the buttons on the back. I like a little more separation.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. What do you think? Share your thoughts in the comments below or on our Facebook and Twitter pages.",
+    "The app for it though is super. finicky and doesn’t work properly so I wish turtle beach would fix that. For the price, I’d say it’s a bit steep considering what you’re paying for. Everything feels premium quality, along with the case.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The right stick in particular would just spin. The micro switch buttons are what really stand out as they are super responsive.",
+    "Reviewer says he feels Turtle Beach has set the bar for next gen controllers. The micro switch buttons are what really stand out as they are super responsive. He wishes he could swap out the wing style tabs for the buttons on the back. But he now fully use all 4 mapping buttons.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. Reviewer: \"I wish i could swap out the thumbtics like the elite. This is a great controller but the reason I’m giving it a two star\"",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. Had this controller only 2 months. So many things to love, but so many let you down.",
+    "Reviewer says the battery life is an exaggeration. The thumbsticks make the a really nice pro. But the thumb sticks grind against the controller. This could have been a really great control. But it’s ok as is. But I’m going to have to return the controller because the thumbsticks are grinding.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The thumbsticks make the a really nice pro. The controller is perfect for a competitive player.",
+    "Reviews of the Xbox One Elite 2 have been positive. The buttons feel like they are made for a fast mouse. The battery life on the console is said to be around 30 hours. Users can play for up to 30 hours with the lights on and off.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. The reviews are based on user experience and product strengths. For more product reviews, go to iReport.com/Reviews.",
+    "Focus on actionable insights for product development. Analyze the following product review feedback and extract key insights about user experience, product strengths, and areas for improvement. I love how it turns green when it’s fully charged. This is the best feeling controller you can buy."
+  ],
+  "analysis_timestamp": "2025-07-03T13:45:53.933423"
+}

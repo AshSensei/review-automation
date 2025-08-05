@@ -1,0 +1,341 @@
+{
+  "metadata": {
+    "total_reviews": 20,
+    "overall_rating": 3.8,
+    "processing_chunks": 34,
+    "successful_summaries": 34
+  },
+  "sentiment_analysis": {
+    "sentiments": [
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.4869925379753113,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 0,
+        "keyword_neg": 2
+      },
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.643566370010376,
+        "mixed_review": true,
+        "ml_sentiment": "neutral",
+        "keyword_pos": 8,
+        "keyword_neg": 6
+      },
+      {
+        "rating": 4.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.5078834295272827,
+        "mixed_review": false,
+        "ml_sentiment": "neutral",
+        "keyword_pos": 1,
+        "keyword_neg": 2
+      },
+      {
+        "rating": 3.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.4803561866283417,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 3,
+        "keyword_neg": 0
+      },
+      {
+        "rating": 4.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.788456380367279,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 2,
+        "keyword_neg": 1
+      },
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.7955665588378906,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 0,
+        "keyword_neg": 2
+      },
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.4765181839466095,
+        "mixed_review": false,
+        "ml_sentiment": "neutral",
+        "keyword_pos": 2,
+        "keyword_neg": 0
+      },
+      {
+        "rating": 1.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.6876500248908997,
+        "mixed_review": true,
+        "ml_sentiment": "positive",
+        "keyword_pos": 3,
+        "keyword_neg": 2
+      },
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.5751298666000366,
+        "mixed_review": false,
+        "ml_sentiment": "negative",
+        "keyword_pos": 1,
+        "keyword_neg": 2
+      },
+      {
+        "rating": 4.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.49453142285346985,
+        "mixed_review": false,
+        "ml_sentiment": "neutral",
+        "keyword_pos": 1,
+        "keyword_neg": 0
+      },
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.9344199299812317,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 3,
+        "keyword_neg": 0
+      },
+      {
+        "rating": 4.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.3915661573410034,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 1,
+        "keyword_neg": 1
+      },
+      {
+        "rating": 4.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.9124283194541931,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 3,
+        "keyword_neg": 1
+      },
+      {
+        "rating": 3.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.7325672507286072,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 3,
+        "keyword_neg": 0
+      },
+      {
+        "rating": 2.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.5578987002372742,
+        "mixed_review": false,
+        "ml_sentiment": "negative",
+        "keyword_pos": 2,
+        "keyword_neg": 0
+      },
+      {
+        "rating": 2.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.619800865650177,
+        "mixed_review": false,
+        "ml_sentiment": "negative",
+        "keyword_pos": 3,
+        "keyword_neg": 1
+      },
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.5584705471992493,
+        "mixed_review": false,
+        "ml_sentiment": "negative",
+        "keyword_pos": 3,
+        "keyword_neg": 1
+      },
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.7275598049163818,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 2,
+        "keyword_neg": 1
+      },
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.8949997425079346,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 3,
+        "keyword_neg": 0
+      },
+      {
+        "rating": 5.0,
+        "sentiment": "NEUTRAL",
+        "confidence": 0.8578376173973083,
+        "mixed_review": false,
+        "ml_sentiment": "positive",
+        "keyword_pos": 2,
+        "keyword_neg": 0
+      }
+    ],
+    "positive_themes": {
+      "great": 10,
+      "love": 7,
+      "good": 5,
+      "responsive": 4,
+      "perfect": 4,
+      "smooth": 4,
+      "comfortable": 2,
+      "recommend": 2,
+      "quality": 2,
+      "solid": 2,
+      "happy": 1,
+      "worth": 1,
+      "amazing": 1,
+      "premium": 1
+    },
+    "negative_themes": {
+      "drift": 5,
+      "issue": 5,
+      "dead": 3,
+      "terrible": 2,
+      "lag": 1,
+      "break": 1,
+      "hate": 1,
+      "problem": 1,
+      "disappointed": 1,
+      "annoying": 1,
+      "cheap": 1
+    }
+  },
+  "contradictions": [],
+  "chunk_summaries": [
+    "This controller has the best response times i have ever witnessed in a gaming controller. It can be customised with lighting, remapping the back buttons, setting the triggers and even seeing your notifications from your phone. This controller beats them all without any doubt.",
+    "From the menu you can also customise the lighting and many other features. The original controller i bought at Turtle Beach had an issue with its A button. I would definitely recomwnd this controller! There is a lot to say about this controller.",
+    "Customer reviews for a gaming controller show no stick drift after a year of use. The only negative is the placement of the menu buttons on the controller. The controller is available in black, white and grey.",
+    "The only negative I really have for. this controller is the placement of the. Menu/Start/Select/Whatever you call them. The buttons on the left side of the controller are too close to the stick. The controller itself is very comfortable in the hand.",
+    "The buttons are responsive, though if you are used to the faced buttons of the Scuf you may feel that they are a bit \"squishy\" The placement of the back buttons works perfect for my hands. The Stealth Ultra is a very comfortable controller.",
+    "Customer reviews for the Xbox One X have been released. Reviewer says he has used the wireless controller many times using the included dongle. The only downside to using it wireless is that there is a delay when you want to start the game.",
+    "Customer reviews for the Xbox One X have been released. Reviewer says he doesn't notice any lag when using the controller in wireless mode. The controller has a great feel and the built-in response curves of the sticks are great.",
+    "The triggers are also very nice and the only thing I would change on them would be to make the trigger locks into more of a mouse click feel instead of the current slightly squishier feel. The placement of the rear buttons is fine, I don't really have any pros or cons.",
+    "Useability really hinges on how your hand lays on them and how easy they are for you to hit. If they are awkward to you after a week of using them, you may want to try something else. I highly recommend trying them out and also trying some other controllers.",
+    "Reviews of gaming controllers are mixed, with some saying they don't work for their hand size. The software for the controllers is fine for the most part, but the onboard memory profiles don't always match up with the memory profiles on the console.",
+    "Reviews of gaming controllers have been mixed to positive. Some users have complained about the lack of custom color options. Others have complained that the controller's lighting is not clear enough. The reviews are based on a survey of more than 1,000 gamers.",
+    "Reviews of the latest Xbox One X controller are in. The controller has been praised for its ease of use and intuitive controls. Reviewer says he is very happy with the controller. However, he does not like the lack of app control buttons.",
+    "Customer reviews of the Scuf Instinct Pro gaming controller. The Stealth Ultra just feels better in game, reviewer says. Reviewer: \"I wish it had the trigger stops of the [Scuf] controllers\"",
+    "Customer reviews for a gaming controller: \"I highly recommend this controller\" \"My currently main controllers are the Stealth Ultra and the Various Scuf controllers depending on the game I am playing\" \"I have a family of 4 who are all Xbox and PC, so when we play together we have plenty of options for controllers\" \"If you play FPS games and need good aim, test it out\"",
+    "Customer reviews for a gaming controller:. Analyze these customer reviews for an Xbox One controller. Analyzing the positive and negative points of each customer review:. The overall sentiment trend for gaming controllers is positive.",
+    "Reviews of the Xbox One controller are mixed. The software is buggy. The hardware is not soft enough. Overall sentiment trend is positive. The controller is not a must-have for gamers.",
+    "The anti friction rings that are supposed to make the thumb sticks glide nice and smooth have actually done the exact opposite of what they were meant to do. After only a few hours of gameplay, the plastic on the thumbsticks do not glide smoothly at all. The thumb sticks have gouges in them from rubbing on the anti-friction rings.",
+    "Turtle Beach's gaming controller has received mixed reviews from gamers. Reviewer: \"I really wanted to love this controller, especially for its Hall Effect thumb sticks\" But reviewer: \"The controller works great, looks cool, and is easy to swap between\"",
+    "The Xbox Elite Series 2 gaming controller has received positive reviews from customers. The controller works great, looks cool, and is easy to swap between devices. The lights drain a lot of battery, and there isnt significant change in the lights when changing the brightness. The battery life isnt quite as long as advertised.",
+    "Customer reviews for the Xbox Elite Series 2 have been positive. Reviewer: \"This is honestly my most favorite controller I've ever used\" Overall sentiment trend: \"Overall this is my favorite controller\"",
+    "Reviews of the XBox One controller have been positive and negative. The most positive reviews were for the controller's clicky buttons and the ability to customize the screen. The negative reviews were mostly for the lack of control and the inability to set up a gaming session.",
+    "Customer reviews for a gaming controller. Analyze the positive and negative points of each review. Overall sentiment trend for gaming controllers is positive. The gaming controller is available in black, white, red and blue.",
+    "Customer reviews for a gaming controller have been mixed to positive. Reviewer: \"Most of the buttons are a joy to click\" \"I was extremely disappointed with the following issues\": \"Random disconnections, left stick not calibrated\"",
+    "Customer reviews for Turtle Beach's gaming controller are mixed to positive. Reviewer: \"I couldn't recommend this controller to anyone\" Customer: \"The only way I'd keep this controller is if it was free\"",
+    "Reviews of gaming controllers have been overwhelmingly positive. The base acts as a drop. Bottom paddle buttons are extremely sensitive and takes getting used to. The trigger lock functions for FPS are obvious and easy to use.",
+    "Customer reviews for the Xbox One X have been published. The reviews have been mostly positive, with the exception of one reviewer who said he didn’t like the placement of the buttons on the back.",
+    "Reviews of the Stealth Pro Controller by Turtle Beach have been very positive. Reviewer says the controller is an amazing controller for gaming. The app for it though is super finicky and doesn’t work properly. The price is a bit steep.",
+    "Customer reviews for the B8t gaming controller are positive. Reviewer says the controller is super easy to prgram with the integrated screen and companion app. However, there are some hiccups with the connectivity of the controller.",
+    "Customer reviews for a gaming controller: B8t the contoller just doesn't respond like the elite series 2. I love the location of the buttons on the back. But i wish i could swap out the outer ring is getting worn out.",
+    "Customer reviews for the Xbox One X have been released. Reviewer: \"So many things to love, but so many let me down\" Customer: \"I don't like that not all of the buttons are remappable\"",
+    "Reviewer says the controller feels lighter than other pro controllers. But the thumb sticks grind against the controller’s friction ring. The battery life is an exaggeration. Overall sentiment trend is positive, but not great.",
+    "Customer reviews for a gaming controller. Analyze these customer reviews for an Xbox One controller. Find out what customers are saying about the Xbox One gaming controller and its buttons. The controller is available in black and white and comes in two versions.",
+    "Customer reviews for a gaming controller: \"Man oh man, lightyears better than the Elite 2 from Microsoft\" \"The buttons feel like clicking a mouse perfect for a fast response while playing competitive\" \"I love the way it sits in my hand. I have gotten a solid 48 hours before my Xbox is dead\"",
+    "Customer reviews for a gaming controller. Analyze the positive and negative points of each review. Then, provide a brief analysis focusing on the main positive points mentioned. Finally, provide an overall sentiment trend for the gaming controller market."
+  ],
+  "final_summary": "Reviews of gaming controllers are mixed, with some saying they don't work for their hand size. The software for the controllers is fine for the most part, but the onboard memory profiles don't always match up with the memory profiles on the console. The Stealth Ultra is a very comfortable controller. The buttons are responsive, though if you are used to the faced buttons of the Scuf you may feel that they are a bit \"squishy\" The only negative I really have for. this controller is the placement of the Menu/Start/Select/Whatever you call them. Reviewer says he has used the wireless controller many times using the included dongle. The only downside to using it wireless is that there is a delay when you want to start the game.",
+  "raw_reviews": [
+    {
+      "review_text": "I have used various other controllers to\n                                      include the Elite 1, Elite 2 and Scuff.\n                                      This controller beats them all without any\n                                      doubt! This controller has the best\n                                      response times i have ever witnessed in a\n                                      cobtroller and its especially noticible\n                                      playing games like For Honor where\n                                      response times really matter. I have not\n                                      had any stick drift issues once so ever,\n                                      if you do get stick drift you just have to\n                                      recalibrate them from the controllers\n                                      menu. From the menu you can also customise\n                                      lighting and many other features like\n                                      remapping the back buttons, setting\n                                      response of the analog sticks and triggers\n                                      and even see your notifications from your\n                                      phone. The original controller i bought at\n                                      launch had an issue with its A button, I\n                                      contacted Turtle Beach's customer support\n                                      and they responded next day and had a new\n                                      controller shipped free of charge that\n                                      same day without any hastle. Between the\n                                      hardware and the support Tuetle Beach has\n                                      would definitely recomwnd this controller!",
+      "review_rating": 5.0
+    },
+    {
+      "review_text": "There is a lot to say about this\n                                      controller. I go through controllers like\n                                      bear goes through honey jars... I have had\n                                      4 of these controllers so far. None of\n                                      them have had any stick drift after a year\n                                      of use. The ones I have returned were due\n                                      to some of the perceived lack of QA in the\n                                      early batches that were shipped out. In\n                                      all cases of returns it was the shoulder\n                                      buttons that would start to have issues.\n                                      My current one doesn't have any of these\n                                      issues. Issues: I have read other reviews\n                                      about the anti-friction rings on these\n                                      controllers wearing grooves into the\n                                      sticks, I have not seen this and as I said\n                                      I have had one in constant use for over a\n                                      year. The only negative I really have for\n                                      this controller is the placement of the\n                                      menu buttons. The\n                                      Menu/Start/Select/Whatever you call them\n                                      now, button on the left side of the\n                                      controller is too close to the stick. You\n                                      have to really concentrate to get your\n                                      finger around the stick to hit the button.\n                                      But that doesn't cause issues in any of\n                                      the games I play, but it may for some\n                                      people. Comfort: The controller itself is\n                                      very comfortable in the hand. It has a\n                                      slight texture to the grips that keep it\n                                      comfortably in your palm. The buttons are\n                                      all responsive, though if you are used to\n                                      Scuf you may feel that they are a bit\n                                      \"squishy\" compared to the faced buttons of\n                                      the Scuf. I tend to use my Stealth Ultra\n                                      for Shooters and even rocket league. I\n                                      also have a couple of Scuf Instinct\n                                      controllers, as well as the newer Scuf\n                                      Valor Pro Wired Controller which I also\n                                      love. The stealth ultra is a very\n                                      comfortable controller. The placement of\n                                      the back buttons works perfect for my\n                                      hands. I'll post some images of how my\n                                      hand sits on them for reference.\n                                      Performance: I tend to use my controllers\n                                      in a wired scenario, though I have used\n                                      this particular controller wireless many\n                                      times using the included dongle. I keep\n                                      the dongle in the charging cradle that\n                                      came with the controller. The only\n                                      downside to using it wireless is that\n                                      there is a delay when you want to start\n                                      your Xbox from a shot down state.\n                                      Sometimes the dongle doesn't connect for\n                                      up to a minute meaning the Xbox just sits\n                                      there until. the dongle finally connects\n                                      and sends the startup signal. Like I said,\n                                      I tend to use it wired so I don't run into\n                                      that issue. I don't notice any lag above\n                                      what I would expect from a wireless Xbox\n                                      controller when in wireless mode. The\n                                      sticks themselves have a great feel and\n                                      the built-in response curves of the sticks\n                                      just feel right to me. That is one of the\n                                      reasons I prefer this over my Scuf\n                                      controllers for games like Call of Duty.\n                                      The aim just feels better. There are\n                                      multiple curves you can choose from in the\n                                      settings. I tend to stick to the Precision\n                                      setting, and I set all my dead zones to\n                                      0%. It feels great and the aim is super\n                                      responsive. The triggers are also very\n                                      nice and the only thing I would change on\n                                      them would be to make the trigger locks\n                                      put the triggers into more of a mouse\n                                      click feel instead of the current slightly\n                                      squishier feel. There is not much travel,\n                                      but compared to the mouse click, style\n                                      trigger locks on my Scuf it just feels a\n                                      bit soft. This doesn't affect my game\n                                      play, but it is strictly a preference\n                                      thing. The placement of the rear buttons\n                                      is fine, I don't really have any pros or\n                                      cons vs. other controllers. As with any\n                                      controller the back buttons and their\n                                      useability really hinges on how your hand\n                                      lays on them and how easy they are for you\n                                      to hit, without accidently hitting them.\n                                      If they are awkward to you after a week of\n                                      using it, you may want to try something\n                                      else because if you can't feel comfortable\n                                      with your back buttons, you will not get\n                                      good muscle memory and will have to\n                                      mentally stop to think about what you are\n                                      doing when trying to hit them and that\n                                      isn't good for any controller. So I highly\n                                      recommend trying them out and also trying\n                                      out some other controllers. Back buttons\n                                      are not a deal breaker for some people,\n                                      but if you do plan to use them, make sure\n                                      you give it a good week of daily use to\n                                      really see if they work for your hand size\n                                      and shape and the way you hold your\n                                      controller. Software: The software for the\n                                      controller is fine for the most part, the\n                                      issue I tend to have is that saving the\n                                      settings back to the controller profile is\n                                      not as simple as it should be. It can be\n                                      confusing and is it feels like there were\n                                      too many steps added. As you will see in\n                                      the images, There are two menus that\n                                      represent the memory profiles in the\n                                      software and the onboard memory profiles.\n                                      They do not always match up. And you would\n                                      assume that you can just click the one you\n                                      are adjusting in the software and then\n                                      just match it up with the one you want to\n                                      save it to on the controller, but you end\n                                      up having to open another menu which makes\n                                      it even more confusing. So the software\n                                      could definitely use some more focus on\n                                      UI/UX (I may be biased as I have been a\n                                      software engineer and architect for over\n                                      25 years). The lighting is fairly straight\n                                      forward though the colors do have some\n                                      apparently duplication, and are rather\n                                      limited. I would like the option to set\n                                      custom colors for some of the effects but\n                                      most of them have pre-set color choices.\n                                      Not a deal breaker, but should be\n                                      something that is easy to add more options\n                                      too. Most of these settings can also be\n                                      done directly on the screen built into the\n                                      controller as well which is a nice bonus.\n                                      I have not used any of the app control\n                                      buttons to tie it in with phone or social\n                                      media apps, I just don't need that on my\n                                      controller. Summary: I am very happy with\n                                      this controller, and like I said I have a\n                                      lot of controllers and tend to go through\n                                      them pretty fast. I currently have 1\n                                      Stealth Ultra that I use on my personal\n                                      Xbox and PC in my office. I also have a\n                                      Scuf Valor Pro in my office for when I\n                                      just need a change. I have 3 Scuf Instinct\n                                      Pro controllers, which I do enjoy, but the\n                                      Stealth Ultra just feels better in game. I\n                                      wish it had the trigger stops of the Scuf\n                                      controllers, but that doesn't hold it back\n                                      at all. I also have a few Xbox Elite\n                                      controllers lying around, an old Razer\n                                      Wolverine Pro, and have returned most\n                                      other controllers (Nacon, Rig,\n                                      Thrustmaster, etc...) My currently main\n                                      daily drivers are the Stealth Ultra and\n                                      the Various Scuf controllers depending on\n                                      what I am playing and on which one of the\n                                      Xboxes I happen to be playing on in a\n                                      given day. We have a family of 4 who are\n                                      all Xbox and PC, so when we play together\n                                      as a family or have friends over we have\n                                      plenty of options for controllers. I\n                                      highly recommend this controller,\n                                      especially if you play FPS games and need\n                                      good aim. But like I said, test it out,\n                                      see how it feels to you. I am a BestBuy\n                                      Total Member, so I get an auto 24 month\n                                      replacement plan on everything. So no harm\n                                      in trying things out to find what works.",
+      "review_rating": 5.0
+    },
+    {
+      "review_text": "I own & use 4 xbox elite series 2\n                                      controllers. i like this for regular\n                                      everyday use. looked up the instructions\n                                      & had no connection issues. Base needs\n                                      to be plugged in to xbox and controller\n                                      links to that wirelessly, not the dongle.\n                                      did the configuration for sticks, no\n                                      drift... unlike elite 2. battery at 56%\n                                      after 10 hours. requires a little more\n                                      patience & set up but is worth it.",
+      "review_rating": 4.0
+    },
+    {
+      "review_text": "This controller seemed great at first\n                                      minus the extremely buggy software both on\n                                      Android and Xbox. Although the software\n                                      was a bit of a pain to get working, once\n                                      it was setup it seemed to be a decent\n                                      controller. Aiming feels a bit different\n                                      coming from a Scuf Controller but that\n                                      might be due to the controller using\n                                      different response curves. Im sure with\n                                      enough time, one can used to it. The\n                                      biggest flaw has to do with the hardware.\n                                      The anti friction rings that are supposed\n                                      to make the thumb sticks glide nice and\n                                      smooth when pushed all the way to the edge\n                                      are not soft enough and after only a few\n                                      hours of gameplay, the plastic on the\n                                      thumb stick (left one on particular) have\n                                      gouges in them from rubbing on the anti\n                                      friction rings. They have actually done\n                                      the exact opposite of what they were meant\n                                      to do. Now, because the plastic has been\n                                      scratched the thumb sticks do not glide\n                                      smoothly at all. They feel like they are\n                                      grinding when you rotate the stick. This\n                                      is obviously something they wont be able\n                                      to remedy with a software update and will\n                                      probably end up having to recall all of\n                                      the controllers they've sold until they\n                                      can get this hardware redesigned and\n                                      remade. I really wanted to love this\n                                      controller, especially for its Hall Effect\n                                      thumb sticks, but this just isnt it. I\n                                      will be returning mine and hopefully\n                                      Turtle Beach will get this figured out for\n                                      a future iteration, but for now, I would\n                                      stay away.",
+      "review_rating": 3.0
+    },
+    {
+      "review_text": "The controller works great, looks cool,\n                                      connects well and is easy to swap between\n                                      devices thanks to the UBS dongle and the\n                                      profiles being stored on the controller\n                                      instead of the xbox or pc. Easy to edit on\n                                      the fly, too, with the screen on the\n                                      controller. Pnly problem is the lights\n                                      drain a lot of battery, and there isnt\n                                      much significant change in the lights when\n                                      i try to change the brightness, so battery\n                                      life isnt quite as long as advertised.\n                                      Still, good controller, feels nice, and\n                                      still has decent battery life (longer than\n                                      the ps5 dualsense edge, but not as long as\n                                      the Xbox Elite Series 2).",
+      "review_rating": 4.0
+    },
+    {
+      "review_text": "This is honestly my most favorite\n                                      controller I've ever used.i used it\n                                      heavily in fps games on pc for about 6\n                                      months before my kids decided to spill\n                                      orange juice all over it so i had to buy\n                                      another. But before that after the 6\n                                      months of use there was no signs of any\n                                      sort or stick drift or shorting. The\n                                      charger for it is so strong you can just\n                                      toss it on and pick it up by the\n                                      charger(it's a stand) and itll pick it\n                                      up/still work without any sort of issues!\n                                      Overall this is my favorite controller ive\n                                      ever used!",
+      "review_rating": 5.0
+    },
+    {
+      "review_text": "Took a bit to get connected and updated\n                                      with xbox but so far loving the\n                                      customization through the controller lcd\n                                      screen. Feels great in the hands and\n                                      doesnt take long getting used to the\n                                      bottom buttons. I always set them up as\n                                      the x, a, b, y buttons. Love this more\n                                      then the elite 2 so far and the lights are\n                                      a great touch.",
+      "review_rating": 5.0
+    },
+    {
+      "review_text": "As an avid gamer who is always trying new\n                                      controllers, I had high hopes for this\n                                      one. The clicky buttons and hall effect\n                                      sticks were a major draw for me. I wish\n                                      someone would create a basic controller\n                                      with good sticks and clicky buttons. But\n                                      after opening the box, I was greeted with\n                                      beautiful hardware and a carrying case\n                                      that had a soft, suede-like interior,\n                                      unlike the elite controllers. The\n                                      controller feels great in my hand, and\n                                      most of the buttons are a joy to click.\n                                      However, my initial excitement was\n                                      short-lived, as I was extremely\n                                      disappointed with the following issues:\n                                      random power downs mid-use (every few\n                                      minutes), random disconnections (which\n                                      required me to repair every few minutes),\n                                      inability to pair with the mobile app\n                                      (preventing me from updating it, even\n                                      after trying on multiple devices), right\n                                      trigger with a strange click as if there\n                                      was debris stuck inside not allowing a\n                                      full click, and left stick not calibrated\n                                      properly and, even after following the\n                                      on-device recalibration, it would only\n                                      input right and down (I have a video of\n                                      this happening). Moreover, any changes\n                                      made to settings such as color and rear\n                                      buttons would only save until the\n                                      controller turned off, after which it\n                                      would factory reset itself. I couldn't\n                                      recommend this controller to anyone. Thank\n                                      you, Turtle Beach, for trying something\n                                      new and pushing others to compete, but\n                                      unfortunately, the only way I'd keep this\n                                      controller is if it was free. I have\n                                      returned the device and will continue to\n                                      search for a controller that actually\n                                      works and impresses. Thanks for reading my\n                                      review.",
+      "review_rating": 1.0
+    },
+    {
+      "review_text": "I got to be honest I do not find a single\n                                      thing that I don't like about this\n                                      controller. I have gone through countless\n                                      controllers, sixty dollars a pop. Beyond\n                                      board calibration software alone is\n                                      exciting. Ten profiles. Even though the\n                                      sticks arent swapable, they are drift\n                                      free, halleffect and on zero dead zone\n                                      very responsive. The base acts as a drop\n                                      in fast charger via usb C (when only\n                                      connected to power)and a wifi transmitter\n                                      (when connected to PC) which is blazing\n                                      fast. But it also is bluetooth compliant.\n                                      Bottom paddle buttons are extremely\n                                      sensitive and takes getting used to. But\n                                      the benefits of mastering them, and the\n                                      trigger lock functions for FPS are\n                                      obvious. I can go on and on. I mean you\n                                      can check your dang social media on it.",
+      "review_rating": 5.0
+    },
+    {
+      "review_text": "I’ve been running this controller for a\n                                      month now with a lot of hours on it\n                                      already. The buttons and sticks are\n                                      smooth. I don’t like the placement of the\n                                      buttons on the back. I like a little more\n                                      separation. I would use the screen to set\n                                      up a profile and change the colors, but it\n                                      was not something I felt that I needed to\n                                      use after that. After putting hours and\n                                      hours on a few different controllers, I go\n                                      back to the elite 2 pro Xbox controller.",
+      "review_rating": 4.0
+    },
+    {
+      "review_text": "What a great controller I loved it!! I’ve\n                                      played with every controller you can\n                                      imagine but I finally found my match. What\n                                      an amazing controller. Being able to tune\n                                      the controller how you want then being\n                                      able to see messages from your phone on\n                                      the controller while gaming is Amazing.",
+      "review_rating": 5.0
+    },
+    {
+      "review_text": "It’s not bad, battery life is good and the\n                                      connection is really stable throughout my\n                                      house. The app for it though is super\n                                      finicky and doesn’t work properly so I\n                                      wish turtle beach would fix that. For the\n                                      price, I’d say it’s a bit steep\n                                      considering what you’re paying for but\n                                      other than that it’s not a terrible\n                                      product.",
+      "review_rating": 4.0
+    },
+    {
+      "review_text": "So far, i have enjoyed the Turle Beach\n                                      Stealth Pro Controller. Everything feels\n                                      premium quality, along with the case. It\n                                      is super easy to prgram with the\n                                      integrated screen and the companion app\n                                      makes updates simple. I did experience\n                                      some hiccups with the connectivity of the\n                                      control during matches in COD. The right\n                                      stick in particular would just spin. It\n                                      has happened on more than one occasion but\n                                      not to the point that it is annoying. I am\n                                      sure with a patch, this will be resolved.\n                                      The micro switch buttons are what really\n                                      stand out as they are super responsive. I\n                                      feel Turtle Beach has set the bar for next\n                                      gen controllers and I would expect others\n                                      to follow on this path.",
+      "review_rating": 4.0
+    },
+    {
+      "review_text": "Very cool concept. B8t the contoller just\n                                      doesnt respond like the elite series 2\n                                      controller feels. I love the location of\n                                      the buttons on the back. Its game changer.\n                                      Most contollers have those wing style\n                                      tabs. And i can only seem to get\n                                      comfortable with using a max of 2 of them.\n                                      One on each side. But with the stealth\n                                      controller i now fully use all 4 mapping\n                                      buttons. But i wish i could swap out the\n                                      thumbtics like the elite. All and all its\n                                      a solid controller, but i went back to the\n                                      elite after 2 weeks.",
+      "review_rating": 3.0
+    },
+    {
+      "review_text": "This is a great controller but the reason\n                                      I’m giving it a two star is I’m going to\n                                      have to use my warranty because the left\n                                      stick under the thumb pad that rides along\n                                      the outer ring is getting worn out\n                                      creating grooves making it not smooth when\n                                      rotating. Xbox elite has metal that rides\n                                      on metal where this one has a metal ring\n                                      where the stick is plastic. Had this\n                                      controller only 2 months.",
+      "review_rating": 2.0
+    },
+    {
+      "review_text": "So many things to love, but so many let\n                                      downs. I’ve been trying for years to find\n                                      the perfect controller. I really thought\n                                      this might be it. However I bought this\n                                      controller less than two weeks ago and\n                                      have maybe 50+ hrs on it. I don’t like\n                                      that not all of the buttons are\n                                      remappable. You cannot remap the start\n                                      select or capture buttons. The controller\n                                      feels lighter than other pro controllers\n                                      which is really nice. But I can tell you\n                                      that the battery life is an exaggeration.\n                                      If I leave it full power mode it lasts me\n                                      the day. However my biggest gripe is the\n                                      thumb sticks. No way to change heights and\n                                      the thumb sticks grind against the\n                                      terrible friction ring. I’m going to have\n                                      to return the controller because the\n                                      gritty grind feeling that is ruining my\n                                      game play. I constantly feel the\n                                      thumbsticks grinding which pulls me from\n                                      game experience. This could have been a\n                                      really great control. But it’s ok as is.\n                                      The thumbsticks make the a really nice pro\n                                      controller sub par experience. I really\n                                      wanted to love this product. I do not see\n                                      how this made it through QC.",
+      "review_rating": 2.0
+    },
+    {
+      "review_text": "I wasn't sure about buying this controller\n                                      with a lot of bad reviews. But I wanted to\n                                      give it a try, and wow, it's the one i was\n                                      looking for. If you are a competitive\n                                      player and care about the input delay,\n                                      this controller is perfect. I saw some bad\n                                      reviews about the buttons felt cheap, but\n                                      im pretty sure they dont know anything\n                                      about good quality. The buttons feel like\n                                      clicking a mouse perfect for a fast\n                                      response while playing competitive",
+      "review_rating": 5.0
+    },
+    {
+      "review_text": "Man oh man, lightyears better than the\n                                      Elite 2 from Microsoft. Haven't been able\n                                      to get it to power on my Xbox when\n                                      powering it on but I don't mind pressing\n                                      the power button. Lights on 100% will also\n                                      drain the battery pretty quick no where\n                                      near the 30 hours they say but if you turn\n                                      them off you will get over 30 hours. I\n                                      have gotten a solid 48 hours before\n                                      completely dead. Also open-box from best\n                                      buy has been nothing but a great money\n                                      saver for me! Thanks for offering it!",
+      "review_rating": 5.0
+    },
+    {
+      "review_text": "I love the way it sits in my hand. The\n                                      buttons are smooth and the weight of the\n                                      controller is perfect. I love how it turns\n                                      green when it’s fully charged to let me\n                                      know it’s ready to go.",
+      "review_rating": 5.0
+    },
+    {
+      "review_text": "This is the best feeling controller you\n                                      can buy, the sticks are great while\n                                      playing fps and more responsive than your\n                                      average gaming controller.",
+      "review_rating": 5.0
+    }
+  ]
+}

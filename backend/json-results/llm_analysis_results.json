@@ -1,0 +1,59 @@
+{
+  "themes": {
+    "themes": {
+      "general_themes": [],
+      "positive_aspects": [],
+      "negative_aspects": [],
+      "insights": []
+    },
+    "sentiment_patterns": {
+      "sentiment_distribution": {
+        "positive": 12,
+        "neutral": 4,
+        "negative": 4
+      },
+      "average_confidence": 0.6562099948525428,
+      "rating_sentiment_correlation": {
+        "5.0": [
+          "positive",
+          "neutral",
+          "positive",
+          "neutral",
+          "negative",
+          "positive",
+          "negative",
+          "positive",
+          "positive",
+          "positive"
+        ],
+        "4.0": [
+          "neutral",
+          "positive",
+          "neutral",
+          "positive",
+          "positive"
+        ],
+        "3.0": [
+          "positive",
+          "positive"
+        ],
+        "1.0": [
+          "positive"
+        ],
+        "2.0": [
+          "negative",
+          "negative"
+        ]
+      },
+      "total_analyzed": 20
+    },
+    "llm_analysis": "Unable to extract themes"
+  },
+  "issues": [],
+  "strategic_insights": "",
+  "analysis_metadata": {
+    "total_reviews": 20,
+    "analysis_date": "2025-07-03T14:08:56.562538",
+    "product_type": "gaming controller"
+  }
+}
