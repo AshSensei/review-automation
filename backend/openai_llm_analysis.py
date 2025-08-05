@@ -165,7 +165,7 @@ class OpenAIReviewAnalyzer:
                 'metadata':{'time':round(time.time(),2),'tokens':self.token_usage}}
 
 # HTML parsing with streaming
- def parse_reviews(html: str) -> List[Dict]:
+def parse_reviews(html: str) -> List[Dict]:
     # Truncate raw HTML and release it after wrapping in stream
     raw = html[:MAX_HTML_SIZE]
     del html
