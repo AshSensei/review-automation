@@ -353,7 +353,7 @@ const SelectedReviewCard = ({
     </CardContent>
   </Card>
 );
-
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 // Main Component
 function HTMLAnalyzer() {
   const [htmlInput, setHtmlInput] = useState("");
@@ -392,7 +392,7 @@ function HTMLAnalyzer() {
     startStatus();
 
     try {
-      const response = await fetch("http://localhost:5000/api/analyze-html", {
+      const response = await fetch(`${API_BASE}/api/analyze-html`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ html: htmlInput, product_type: "gaming controller" }),
