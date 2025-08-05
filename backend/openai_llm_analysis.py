@@ -1,20 +1,15 @@
+import gc
 import json
 import re
 import os
-from collections import Counter, defaultdict
+from collections import Counter
 from bs4 import BeautifulSoup
 from transformers import pipeline
 import logging
-from typing import List, Dict, Tuple, Optional, Any
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 import nltk
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.corpus import stopwords
 from textstat import flesch_reading_ease
-from openai import OpenAI
-import asyncio
-import aiohttp
-from concurrent.futures import ThreadPoolExecutor
 import time
 from dotenv import load_dotenv
 import os
@@ -800,10 +795,16 @@ def main():
 
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+CORS(app, origins=[
+    "http://localhost:3000",
+    "http://localhost:5173",  # Vite dev server
+    "https://*.vercel.app",   # All Vercel subdomains
+    r"https://.*\.vercel\.app"  # Regex pattern for Vercel
+])
 
 @app.route('/api/analyze-html', methods=['POST'])
 def analyze_html():
+    from openai import OpenAI
     try:
         # Get HTML from request
         data = request.get_json()
@@ -830,7 +831,8 @@ def analyze_html():
         
         # Generate analysis
         analysis_results = analyzer.generate_comprehensive_analysis(reviews, product_type)
-        
+        del openai
+        gc.collect()
         # Return results in format expected by React component
         return jsonify({
             'reviews': [r['review_text'] for r in reviews],
