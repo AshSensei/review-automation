@@ -33,171 +33,136 @@ class OpenAIReviewAnalyzer:
         }
     
     def batch_sentiment_analysis(self, reviews: List[Dict]) -> List[Dict]:
-        """Perform sentiment analysis using OpenAI."""
+        """Perform sentiment analysis using OpenAI with memory optimization."""
         print("📊 Running OpenAI sentiment analysis...")
         
-        # Process in smaller batches to manage token usage
-        batch_size = 15
+        # Smaller batches and limit total reviews processed
+        batch_size = 8
+        max_reviews = min(len(reviews), 100)  # Limit to 100 reviews max
+        reviews = reviews[:max_reviews]
+        
         sentiments = []
         
         for i in range(0, len(reviews), batch_size):
             batch = reviews[i:i + batch_size]
             
-            # Prepare batch text
-            batch_texts = []
+            # Create prompt without storing intermediate strings
+            review_texts = []
             for idx, review in enumerate(batch):
-                text = review['review_text'][:300]  # Truncate for efficiency
+                text = review['review_text'][:200]  # Smaller truncation
                 rating = review.get('review_rating', 'N/A')
-                batch_texts.append(f"Review {i+idx} (Rating: {rating}): {text}")
+                review_texts.append(f"{i+idx}|{rating}|{text}")
             
-            combined_text = "\n\n".join(batch_texts)
-            
-            prompt = f"""Analyze the sentiment of these reviews. For each review, provide:
-- sentiment: "positive", "negative", or "neutral"
-- confidence: score from 0.0 to 1.0
+            prompt = f"""Analyze sentiment for these reviews (format: index|rating|text):
 
-Reviews:
-{combined_text}
+{chr(10).join(review_texts)}
 
-Return as JSON array:
-[
-  {{"review_index": 0, "sentiment": "positive", "confidence": 0.85, "review_rating": 4}},
-  {{"review_index": 1, "sentiment": "negative", "confidence": 0.92, "review_rating": 2}}
-]"""
+Return JSON array: [{{"review_index": 0, "sentiment": "positive", "confidence": 0.85}}]"""
 
             try:
                 response = self.openai_client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.1,
-                    max_tokens=1000
+                    max_tokens=500
                 )
                 
                 self.token_usage['total_tokens'] += response.usage.total_tokens
                 self.token_usage['estimated_cost'] += response.usage.total_tokens * 0.00015 / 1000
                 
-                # Parse response
+                # Parse response and clean up immediately
                 response_content = response.choices[0].message.content.strip()
                 if response_content.startswith("```json"):
                     response_content = response_content[7:-3].strip()
                 
                 batch_sentiments = json.loads(response_content)
-                
-                # Adjust indices for global position
-                for sentiment in batch_sentiments:
-                    sentiment['review_index'] += i
-                    
                 sentiments.extend(batch_sentiments)
+                
+                # Clean up variables
+                del response_content, batch_sentiments
                 
             except Exception as e:
                 logger.warning(f"Sentiment analysis failed for batch {i//batch_size}: {e}")
-                # Fallback for failed batch
+                # Simple fallback without storing large objects
                 for idx, review in enumerate(batch):
                     rating = review.get('review_rating', 3)
-                    # Simple rating-based sentiment fallback
                     if rating >= 4:
-                        sentiment = 'positive'
-                        confidence = 0.7
+                        sentiment, confidence = 'positive', 0.7
                     elif rating <= 2:
-                        sentiment = 'negative'
-                        confidence = 0.7
+                        sentiment, confidence = 'negative', 0.7
                     else:
-                        sentiment = 'neutral'
-                        confidence = 0.5
+                        sentiment, confidence = 'neutral', 0.5
                     
                     sentiments.append({
                         'review_index': i + idx,
                         'sentiment': sentiment,
-                        'confidence': confidence,
-                        'review_rating': rating
+                        'confidence': confidence
                     })
+            
+            # Clean up batch data
+            del review_texts, batch
+            
+            # Force garbage collection every few batches
+            if i % (batch_size * 3) == 0:
+                gc.collect()
         
         return sentiments
     
     def extract_issues_with_llm(self, reviews: List[Dict], product_type: str) -> List[Dict]:
-        """Extract specific issues using OpenAI for negative reviews."""
+        """Extract specific issues using OpenAI with memory optimization."""
         print("🤖 Extracting issues with LLM...")
         
-        # Filter negative reviews (rating <= 2 or use all if no ratings)
+        # Filter and limit negative reviews more aggressively
         negative_reviews = []
-        for review in reviews:
+        for review in reviews[:50]:  # Only check first 50 reviews
             rating = review.get('review_rating', 3)
             if rating <= 2:
                 negative_reviews.append(review)
-            elif rating == 3:
-                # For 3-star reviews, include some for analysis
-                negative_reviews.append(review)
+            if len(negative_reviews) >= 10:  # Max 10 negative reviews
+                break
         
-        # If no low ratings, take a sample anyway
         if not negative_reviews:
-            negative_reviews = reviews[:10]
+            # Take first 5 reviews if no negatives found
+            negative_reviews = reviews[:5]
         
-        # Limit to 15 most informative negative reviews for token efficiency
-        negative_reviews = negative_reviews[:15]
+        # Create compact prompt without storing large intermediate strings
+        texts = [f"{i}: {r['review_text'][:250]}" for i, r in enumerate(negative_reviews)]
         
-        # Prepare review text for LLM
-        review_texts = []
-        for i, review in enumerate(negative_reviews):
-            rating = review.get('review_rating', 'N/A')
-            text = review['review_text'][:400]  # Limit length
-            review_texts.append(f"Review {i+1} (Rating: {rating}): {text}")
-        
-        combined_text = "\n\n".join(review_texts)
-        
-        prompt = f"""Analyze these {product_type} reviews and extract specific product issues.
+        prompt = f"""Find issues in these {product_type} reviews:
 
-For each issue found, provide:
-1. Issue name (brief, specific)
-2. Description (what exactly is wrong)
-3. Frequency (how many reviews mention this)
-4. Severity (high/medium/low based on impact)
-5. Example quote from reviews
+{chr(10).join(texts)}
 
-Focus on concrete, actionable issues, not vague complaints.
-
-Reviews:
-{combined_text}
-
-Return as JSON array with format:
-[
-  {{
-    "issue_name": "connection_drops",
-    "description": "Device frequently disconnects during use",
-    "frequency": 3,
-    "severity": "high",
-    "example_quote": "keeps disconnecting every few minutes"
-  }}
-]"""
+Return JSON: [{{"issue_name": "name", "description": "desc", "frequency": 1, "severity": "high", "example_quote": "quote"}}]"""
 
         try:
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
-                max_tokens=2000
+                max_tokens=800
             )
             
-            # Track token usage
             self.token_usage['total_tokens'] += response.usage.total_tokens
             self.token_usage['estimated_cost'] += response.usage.total_tokens * 0.00015 / 1000
 
-            # Get the response content and strip markdown
             response_content = response.choices[0].message.content.strip()
             if response_content.startswith("```json"):
                 response_content = response_content[7:-3].strip()
 
             issues = json.loads(response_content)
             
-            # Add review context
+            # Add metadata without creating new objects
             for issue in issues:
                 issue['type'] = self.categorize_issue(issue['issue_name'])
                 issue['review_count'] = len(negative_reviews)
             
-            return issues
+            # Clean up
+            del response_content, texts
+            return issues[:5]  # Limit to 5 issues
             
         except Exception as e:
             logger.error(f"LLM issue extraction failed: {e}")
-            return self.fallback_issue_extraction(negative_reviews)
+            return []
     
     def categorize_issue(self, issue_name: str) -> str:
         """Categorize issues into types."""
@@ -220,59 +185,32 @@ Return as JSON array with format:
         return 'other'
     
     def analyze_themes_with_llm(self, reviews: List[Dict], product_type: str) -> Dict[str, Any]:
-        """Analyze themes using OpenAI with smart sampling."""
+        """Analyze themes using OpenAI with memory optimization."""
         print("🎯 Analyzing themes with LLM...")
         
-        # Smart sampling: get diverse representative reviews
-        sample_reviews = self.get_representative_sample(reviews, 12)
+        # Very small sample to minimize memory usage
+        sample_reviews = self.get_representative_sample(reviews, 6)
         
-        # Prepare sample text
-        sample_texts = []
-        for i, review in enumerate(sample_reviews):
-            rating = review.get('review_rating', 'N/A')
-            text = review['review_text'][:350]  # Truncate for token efficiency
-            sample_texts.append(f"Review {i+1} (Rating: {rating}): {text}")
+        # Create compact prompt
+        texts = [f"{i}: {r['review_text'][:200]}" for i, r in enumerate(sample_reviews)]
         
-        combined_text = "\n\n".join(sample_texts)
-        
-        # Combined prompt for theme discovery and analysis
-        prompt = f"""Analyze these {product_type} reviews and:
+        prompt = f"""Analyze these {product_type} reviews. Return JSON:
 
-1. Identify 6-8 main themes/aspects customers discuss
-2. For each theme, analyze sentiment and provide details
+{chr(10).join(texts)}
 
-Focus on concrete features and aspects, not general sentiment.
-
-Reviews:
-{combined_text}
-
-Return as JSON:
-{{
-  "discovered_themes": ["theme1", "theme2", ...],
-  "themes": {{
-    "theme_name": {{
-      "mentions": 5,
-      "sentiment": "positive",
-      "confidence": 0.8,
-      "key_phrases": ["works great", "very responsive"],
-      "example_quote": "buttons are very responsive"
-    }}
-  }}
-}}"""
+{{"discovered_themes": ["theme1", "theme2"], "themes": {{"theme1": {{"mentions": 2, "sentiment": "positive", "confidence": 0.8, "key_phrases": ["good"], "example_quote": "works well"}}}}}}"""
 
         try:
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.2,
-                max_tokens=1500
+                max_tokens=800
             )
             
-            # Track token usage
             self.token_usage['total_tokens'] += response.usage.total_tokens
             self.token_usage['estimated_cost'] += response.usage.total_tokens * 0.00015 / 1000
 
-            # Get the response content and strip markdown
             response_content = response.choices[0].message.content.strip()
             if response_content.startswith("```json"):
                 response_content = response_content[7:-3].strip()
@@ -280,11 +218,13 @@ Return as JSON:
             theme_analysis = json.loads(response_content)
             theme_analysis['sample_size'] = len(sample_reviews)
             
+            # Clean up
+            del response_content, texts
             return theme_analysis
             
         except Exception as e:
             logger.error(f"LLM theme analysis failed: {e}")
-            return self.fallback_theme_analysis(reviews, product_type)
+            return {'themes': {}, 'discovered_themes': [], 'sample_size': 0}
     
     def get_representative_sample(self, reviews: List[Dict], target_count: int) -> List[Dict]:
         """Get diverse representative sample of reviews."""
@@ -526,9 +466,20 @@ Return as JSON:
 
 # HTML parsing function
 def parse_reviews_from_html_string(html_str: str) -> Optional[List[Dict]]:
-    """Parse reviews from HTML string with enhanced error handling."""
+    """Parse reviews from HTML string with memory optimization."""
     try:
-        soup = BeautifulSoup(html_str, 'html.parser')
+        # Limit HTML size to prevent memory issues
+        max_html_size = 2 * 1024 * 1024  # 2MB limit
+        if len(html_str) > max_html_size:
+            logger.warning(f"HTML too large ({len(html_str)} bytes), truncating to {max_html_size}")
+            html_str = html_str[:max_html_size]
+        
+        # Use lxml parser if available (more memory efficient), fallback to html.parser
+        try:
+            soup = BeautifulSoup(html_str, 'lxml')
+        except:
+            soup = BeautifulSoup(html_str, 'html.parser')
+        
         reviews = []
         
         # Try multiple selectors
@@ -543,8 +494,12 @@ def parse_reviews_from_html_string(html_str: str) -> Optional[List[Dict]]:
         
         if not review_elements:
             logger.warning("No review elements found")
+            # Clean up immediately
+            del soup
+            gc.collect()
             return []
         
+        # Process elements and clean up as we go
         for element in review_elements:
             review_data = {'review_text': '', 'review_rating': None}
             
@@ -553,7 +508,9 @@ def parse_reviews_from_html_string(html_str: str) -> Optional[List[Dict]]:
             for selector in text_selectors:
                 text_element = element.select_one(selector)
                 if text_element:
-                    review_data['review_text'] = text_element.get_text(strip=True)
+                    text = text_element.get_text(strip=True)
+                    # Limit individual review length
+                    review_data['review_text'] = text[:2000] if len(text) > 2000 else text
                     break
             
             # Extract rating
@@ -565,12 +522,23 @@ def parse_reviews_from_html_string(html_str: str) -> Optional[List[Dict]]:
             
             if review_data['review_text']:
                 reviews.append(review_data)
+                
+            # Limit total reviews to prevent memory issues
+            if len(reviews) >= 200:
+                logger.warning("Reached review limit (200), stopping parsing")
+                break
+        
+        # Clean up soup object immediately
+        del soup
+        gc.collect()
         
         logger.info(f"Successfully parsed {len(reviews)} reviews")
         return reviews
     
     except Exception as e:
         logger.error(f"Error parsing HTML: {e}")
+        # Ensure cleanup on error
+        gc.collect()
         return None
 
 # Flask app
@@ -585,6 +553,9 @@ CORS(app, origins=[
 @app.route('/api/analyze-html', methods=['POST'])
 def analyze_html():
     try:
+        # Aggressive memory management
+        gc.collect()
+        
         # Get HTML from request
         data = request.get_json()
         html_content = data.get('html', '')
@@ -592,45 +563,67 @@ def analyze_html():
         if not html_content:
             return jsonify({'error': 'No HTML content provided'}), 400
         
+        # Check HTML size before processing
+        if len(html_content) > 3 * 1024 * 1024:  # 3MB limit
+            return jsonify({'error': 'HTML file too large (max 3MB)'}), 400
+        
         # Parse reviews from HTML string
         reviews = parse_reviews_from_html_string(html_content)
+        
+        # Clean up HTML content immediately
+        del html_content, data
+        gc.collect()
         
         if not reviews:
             return jsonify({'error': 'No reviews found in HTML'}), 400
         
+        # Limit reviews for memory safety
+        if len(reviews) > 50:
+            reviews = reviews[:50]
+            logger.warning(f"Limited to first 50 reviews for memory safety")
+        
         # Get product type (or use default)
-        product_type = data.get('product_type', 'product')
+        product_type = request.get_json().get('product_type', 'product') if request.get_json() else 'product'
         
         # Initialize analyzer
         openai_api_key = os.getenv('OPENAI_API_KEY')
         if not openai_api_key:
             return jsonify({'error': 'OpenAI API key not configured'}), 500
         
-        # Force garbage collection before analysis
-        gc.collect()
-        
         analyzer = OpenAIReviewAnalyzer(openai_api_key)
         
         # Generate analysis
         analysis_results = analyzer.generate_comprehensive_analysis(reviews, product_type)
         
-        # Return results in format expected by React component
-        return jsonify({
-            'reviews': [r['review_text'] for r in reviews],
+        # Clean up analyzer
+        del analyzer
+        gc.collect()
+        
+        # Create minimal response to save memory
+        response_data = {
+            'reviews': [r['review_text'][:500] for r in reviews[:20]],  # Limit and truncate
             'sentiment': analysis_results['metrics']['sentiment_distribution'],
             'themes': analysis_results['themes'],
-            'issues': analysis_results['issues'],
+            'issues': analysis_results['issues'][:3],  # Limit issues
             'insights': analysis_results['insights'],
             'summary': analysis_results['insights'].get('executive_summary', ''),
-            'analysis_metadata': analysis_results['analysis_metadata']
-        })
+            'analysis_metadata': {
+                'total_reviews': analysis_results['analysis_metadata']['total_reviews'],
+                'analysis_time_seconds': analysis_results['analysis_metadata']['analysis_time_seconds'],
+                'estimated_cost': analysis_results['analysis_metadata']['token_usage']['estimated_cost']
+            }
+        }
+        
+        # Clean up analysis results
+        del analysis_results, reviews
+        gc.collect()
+        
+        return jsonify(response_data)
         
     except Exception as e:
         logger.error(f"API error: {e}")
+        gc.collect()  # Clean up on error
         return jsonify({'error': str(e)}), 500
-    finally:
-        # Clean up memory after each request
-        gc.collect()
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
