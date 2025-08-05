@@ -392,7 +392,7 @@ function HTMLAnalyzer() {
     startStatus();
 
     try {
-      const response = await fetch(`${API_BASE}/api/analyze-html`, {
+      const response = await fetch(`${API_BASE}api/analyze-html`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ html: htmlInput, product_type: "gaming controller" }),
