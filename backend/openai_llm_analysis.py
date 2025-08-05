@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
+from openai import OpenAI
 load_dotenv()
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -804,7 +804,7 @@ CORS(app, origins=[
 
 @app.route('/api/analyze-html', methods=['POST'])
 def analyze_html():
-    from openai import OpenAI
+    
     try:
         # Get HTML from request
         data = request.get_json()
@@ -831,8 +831,6 @@ def analyze_html():
         
         # Generate analysis
         analysis_results = analyzer.generate_comprehensive_analysis(reviews, product_type)
-        del openai
-        gc.collect()
         # Return results in format expected by React component
         return jsonify({
             'reviews': [r['review_text'] for r in reviews],
