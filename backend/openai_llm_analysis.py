@@ -34,11 +34,11 @@ logger = logging.getLogger(__name__)
 
 # Flask app setup
 app = Flask(__name__)
-CORS(app, origins=[
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://*.vercel.app"
-])
+CORS(
+    app,
+    resources={r"/api/*": {"origins": r"^https://.*\.vercel\.app$"}},
+    supports_credentials=True
+)
 
 class OpenAIReviewAnalyzer:
     def __init__(self, api_key: str):
