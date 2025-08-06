@@ -36,22 +36,12 @@ logger = logging.getLogger(__name__)
 
 # Flask app setup
 app = Flask(__name__)
-vercel_regex = re.compile(r"^https://.*\.vercel\.app$")
-
 CORS(
     app,
-    resources={r"/api/*": {
-        "origins": [
-            vercel_regex,
-            # You can still whitelist localhost for testing:
-            "http://localhost:3000",
-            "http://localhost:5173",
-        ],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"],
-        "supports_credentials": False
-    }},
+    resources={r"/api/*": {"origins": ["*"]}},  # Allow all origins for now
+    supports_credentials=False  # Set to False when allowing all origins
 )
+
 
 class OpenAIReviewAnalyzer:
     def __init__(self, api_key: str):
