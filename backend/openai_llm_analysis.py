@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(
     app,
-    resources={r"/api/*": {"origins": os.getenv("FRONTEND_ORIGIN_REGEX", r"^https://.*\\.vercel\\.app$")}},
+    resources={r"/api/*": {"origins": "https://*.vercel.app"}},
     supports_credentials=False,
 )
 
