@@ -85,7 +85,7 @@ class OpenAIReviewAnalyzer:
                 logger.warning(f"LLM sentiment analysis failed: {e}, falling back to rating-based")
                 data = []
                 for idx, r in enumerate(batch):
-                    rating = r.get('review_rating', 3)
+                    rating = r.get('review_rating')
                     if rating is None:
                         sentiment = 'neutral'
                         conf = 0.5
@@ -99,7 +99,9 @@ class OpenAIReviewAnalyzer:
         return sentiments
 
     def extract_issues_with_llm(self, reviews: List[Dict], product_type: str) -> List[Dict]:
-        neg = [r for r in reviews[:ANALYSIS_REVIEW_LIMIT] if r.get('review_rating', 3) <= 2][:NEGATIVE_SAMPLE]
+        # Filter negative reviews, handling None ratings safely
+        neg = [r for r in reviews[:ANALYSIS_REVIEW_LIMIT] 
+               if r.get('review_rating') is not None and r.get('review_rating') <= 2][:NEGATIVE_SAMPLE]
         if not neg: 
             neg = reviews[:5]  # fallback to first 5 if no negative reviews
         
