@@ -38,8 +38,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(
     app,
-    resources={r"/api/*": {"origins": ["*"]}},  # Allow all origins for now
-    supports_credentials=False  # Set to False when allowing all origins
+    resources={r"/api/*": {"origins": r"^https://.*\.vercel\.app$"}},
+    supports_credentials=False
 )
 
 class OpenAIReviewAnalyzer:
