@@ -182,8 +182,17 @@ class OpenAIReviewAnalyzer:
             + "\n".join(
                 f"Review {i+1}: {r['review_text'][:200]}" for i, r in enumerate(sample)
             )
-            + "\n\nReturn only valid JSON with themes, their frequencies, and sample quotes: "
-            '{"themes":{"theme_name":"frequency"},"discovered_themes":["theme1","theme2"],"sample_quotes":["quote1","quote2"]}'
+            + "\n\nReturn only valid JSON with themes, their frequencies, key phrases, and sample quotes in this exact format: "
+            '{'
+            '"themes": {'
+            '  "theme_name": {'
+            '    "frequency": number,'
+            '    "key_phrases": ["phrase1", "phrase2"]'
+            '  }'
+            '},'
+            '"discovered_themes": ["theme1", "theme2"],'
+            '"sample_quotes": ["quote1", "quote2"]'
+            '}'
         )
 
         try:
