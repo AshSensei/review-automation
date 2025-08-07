@@ -10,7 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useState, useCallback } from "react";
-import { ThumbsUp, ThumbsDown, Lightbulb, X, Minus } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Lightbulb, Minus } from "lucide-react";
 import { FadeTransition } from '../components/ui/FadeTransition';
 
 // Types and Interfaces
