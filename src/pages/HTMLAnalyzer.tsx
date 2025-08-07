@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { useState, useCallback } from "react";
 import { ThumbsUp, ThumbsDown, Lightbulb, X, Minus } from "lucide-react";
+import { FadeTransition } from '../components/ui/FadeTransition';
 
 // Types and Interfaces
 type TokenUsage = { total_tokens: number; estimated_cost: number };
@@ -220,11 +221,18 @@ const useStatusCycling = () => {
 };
 
 // LoadingCarousel component (matches your original)
-const LoadingCarousel = ({ status }: { status: StatusUpdate | null }) => (
-  <div className="flex items-center justify-center p-8 bg-blue-50 rounded-lg">
-    <span className="text-blue-800">{status?.message || "Processing..."}</span>
-  </div>
-);
+const LoadingCarousel = ({ status }: { status: StatusUpdate | null }) => {
+  return (
+    // The container needs a fixed height to prevent layout shifts during the animation
+    <div className="flex items-center justify-center p-8 bg-blue-50 rounded-lg h-20">
+      <FadeTransition animationKey={status?.timestamp || 0}>
+        <span className="text-blue-800 text-center">
+          {status?.message || "Processing..."}
+        </span>
+      </FadeTransition>
+    </div>
+  );
+};
 
 // Components
 const ThemeDetailCard = ({
@@ -454,35 +462,6 @@ const RecommendationCard = ({
   </article>
 );
 
-const SelectedReviewCard = ({
-  review,
-  onClose,
-}: {
-  review: string;
-  onClose: () => void;
-}) => (
-  <Card id="selected-review">
-    <CardHeader>
-      <div className="flex items-center justify-between">
-        <CardTitle>Related Review</CardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          aria-label="Close review"
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      </div>
-    </CardHeader>
-    <CardContent>
-      <blockquote className="p-4 border-l-4 border-blue-500 bg-blue-50 rounded-r-md">
-        <p className="text-gray-800 italic">"{review}"</p>
-      </blockquote>
-    </CardContent>
-  </Card>
-);
-
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/";
 
 // Main Component
@@ -491,7 +470,6 @@ function HTMLAnalyzer() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState("");
-  const [selectedReview, setSelectedReview] = useState<string | null>(null);
 
   const {
     statusUpdates,
@@ -509,7 +487,6 @@ function HTMLAnalyzer() {
     setLoading(true);
     setError("");
     setResults(null);
-    setSelectedReview(null);
     startStatus();
 
     try {
@@ -546,15 +523,9 @@ function HTMLAnalyzer() {
     setHtmlInput("");
     setResults(null);
     setError("");
-    setSelectedReview(null);
     clearStatus();
   }, [clearStatus]);
 
-  const handleCloseReview = useCallback(() => {
-    setSelectedReview(null);
-  }, []);
-
-  
 
   return (
     <main className="p-8 max-w-4xl mx-auto">
@@ -797,13 +768,6 @@ function HTMLAnalyzer() {
             </Card>
           )}
 
-          {/* Selected Review Card */}
-          {selectedReview && (
-            <SelectedReviewCard
-              review={selectedReview}
-              onClose={handleCloseReview}
-            />
-          )}
 
           {/* Full JSON Output */}
           <Card>
