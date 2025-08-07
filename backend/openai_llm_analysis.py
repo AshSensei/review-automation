@@ -193,32 +193,42 @@ def parse_reviews_comprehensive(html_content: str) -> List[Dict[str, Any]]:
 
 class OpenAIReviewAnalyzer:
     def __init__(self, openai_api_key: str):
-        """Initialize the analyzer with OpenAI."""
         self.openai_client = OpenAI(api_key=openai_api_key)
+        self.token_usage = {'total_tokens': 0, 'estimated_cost': 0.0}
 
-        # Token usage tracking
-        self.token_usage = {
-            'total_tokens': 0,
-            'estimated_cost': 0.0
+    def _track_usage(self, usage, model_name: str):
+        if not usage: return
+        
+        # Prices per 1M tokens for input/output
+        pricing = {
+            "gpt-5": (1.25, 10.00),
+            "gpt-5-mini": (0.25, 2.00),
+            "gpt-5-nano": (0.05, 0.40)
         }
-
-    def _track_usage(self, usage):
-        """Track OpenAI API usage."""
-        if usage:
-            tokens = usage.total_tokens
-            self.token_usage['total_tokens'] += tokens
-            # Using gpt-5 pricing: $0.150 / 1M input tokens
-            self.token_usage['estimated_cost'] += tokens * 1.25 / 1000000
-
+        
+        # Simplified cost estimation
+        input_price, _ = pricing.get(model_name, (0, 0))
+        tokens = usage.total_tokens
+        self.token_usage['total_tokens'] += tokens
+        self.token_usage['estimated_cost'] += (tokens * input_price) / 1000000
+    def _parse_json_from_response(self, response: Any) -> Any:
+        try:
+            raw_output = response.content[0].text
+            content = re.sub(r"^```json|```$", "", raw_output.strip())
+            return json.loads(content)
+        except (IndexError, AttributeError, json.JSONDecodeError) as e:
+            logger.error(f"Failed to parse JSON from response: {e}")
+            return None
+    
     def batch_sentiment_analysis(self, reviews: List[Dict]) -> List[Dict]:
         """
-        Performs sentiment analysis on a batch of reviews using the OpenAI API.
+        Performs sentiment analysis on a batch of reviews using the GPT-5 Responses API.
         """
-        logger.info("📊 Running batch sentiment analysis with OpenAI...")
+        logger.info("📊 Running batch sentiment analysis with GPT-5 Nano...")
         sentiments = []
         # Filter out empty reviews before sending to API
         valid_reviews = [(i, r) for i, r in enumerate(reviews) if r.get('review_text', '').strip()]
-        
+
         if not valid_reviews:
             return []
 
@@ -226,33 +236,29 @@ class OpenAIReviewAnalyzer:
         prompt_reviews = "\n".join([f'{{"index": {i}, "text": {json.dumps(r["review_text"][:1000])}}}' for i, r in valid_reviews])
 
         prompt = f"""
-Analyze the sentiment for each JSON object in the following list of reviews.
-For each review, determine if the sentiment is "positive", "negative", or "neutral".
-Respond with a single JSON object with a key "sentiments" which contains a JSON array. Each object in the array must contain the original 'index' and the determined 'sentiment'.
-DO NOT include any other text, explanations, or markdown.
+    Analyze the sentiment for each JSON object in the following list of reviews.
+    For each review, determine if the sentiment is "positive", "negative", or "neutral".
+    Respond with a single JSON object with a key "sentiments" which contains a JSON array. Each object in the array must contain the original 'index' and the determined 'sentiment'.
+    DO NOT include any other text, explanations, or markdown.
 
-Example response format:
-{{
-  "sentiments": [
-    {{"index": 0, "sentiment": "positive"}},
-    {{"index": 1, "sentiment": "negative"}}
-  ]
-}}
-
-Reviews to analyze:
-{prompt_reviews}
-"""
+    Reviews to analyze:
+    {prompt_reviews}
+    """
         try:
-            response = self.openai_client.chat.completions.create(
-                model="gpt-5",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-                max_completion_tokens=2000,
-                response_format={"type": "json_object"}
+            # Use the new Responses API with gpt-5-nano and minimal reasoning effort
+            response = self.openai_client.responses.create(
+                model="gpt-5-nano",
+                input=prompt,
+                reasoning={
+                    "effort": "minimal"
+                }
             )
-            self._track_usage(response.usage)
-            content = response.choices[0].message.content.strip()
-            result_data = json.loads(content)
+            
+            # NOTE: The new API response structure may differ. 
+            # The documentation suggests the main text is in the first content block.
+            # You may need to print(response) to confirm the exact path to the text content.
+            raw_output = response.content[0].text
+            result_data = json.loads(raw_output)
             llm_sentiments = result_data.get('sentiments', [])
 
             # Create a dictionary for quick lookup
@@ -260,7 +266,7 @@ Reviews to analyze:
 
             # Map the results back to the original review list
             for i, review in enumerate(reviews):
-                sentiment_label = sentiment_map.get(i, 'neutral') # Default to neutral if API didn't return a value for this index
+                sentiment_label = sentiment_map.get(i, 'neutral')
                 sentiments.append({
                     'review_index': i,
                     'sentiment': sentiment_label,
@@ -286,80 +292,43 @@ Reviews to analyze:
                 })
         return sentiments
 
-    def extract_issues_with_llm(self, reviews: List[Dict], product_type: str) -> List[Dict]:
-        """Enhanced issue extraction with better prompting from original code."""
-        print("🤖 Extracting issues with enhanced LLM...")
-
-        # Get negative reviews more systematically
+    def extract_issues_with_llm(self, reviews: List[Dict], product_type: str, return_full_response: bool = False) -> Any:
+        logger.info("🤖 Extracting issues with GPT-5 Mini...")
         negative_reviews = [r for r in reviews if r.get('review_rating', 3) <= 2]
-        # If there are no negative reviews, consider all of them
-        if not negative_reviews:
-            negative_reviews = reviews
-            
-        # Enhanced prompt from original code
-        prompt = f"""
-You are an expert at analyzing user feedback for {product_type} products.
-
-Please follow these steps:
-1. Carefully read the customer reviews provided below.
-2. Identify recurring or serious issues mentioned by multiple users.
-3. Group similar complaints together as one "issue".
-4. For each issue:
-    - Give it a short but descriptive "issue_name"
-    - Summarize it briefly under "description"
-    - Rate its severity as "high", "medium", or "low" based on impact
-    - Count how many users mention this issue as "frequency"
-    - Choose one quote that clearly illustrates the issue as "example_quote"
-
-Return the final result as a JSON array, formatted EXACTLY like this:
-[
- {{
-  "issue_name": "unique_name",
-  "description": "brief description",
-  "severity": "high|medium|low",
-  "frequency": number,
-  "example_quote": "..."
- }},...
-]
-
-Do not explain anything outside the JSON.
-
-Reviews:
-""" + "\n".join(f"Review {i+1}: {r['review_text'][:250]}" for i, r in enumerate(negative_reviews))
+        if not negative_reviews: negative_reviews = reviews
+        
+        prompt = f"""<instructions>You are an expert product analyst. Read the reviews and identify recurring or serious issues. Group similar complaints into a single issue. For each, provide an 'issue_name', 'description', 'severity', and 'example_quote'. Return a JSON array.</instructions>\nReviews:\n""" + "\n".join(f"Review: {r['review_text']}" for r in negative_reviews)
 
         try:
-            response = self.openai_client.chat.completions.create(
-                model="gpt-5",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
-                max_completion_tokens=800
-            )
-
-            self._track_usage(response.usage)
-
-            # Clean response content
-            content = re.sub(r"^```json|```$", "", response.choices[0].message.content.strip())
-            issues = json.loads(content)
-
-            # Enrich with additional data
+            response = self.openai_client.responses.create(model="gpt-5-mini", input=prompt, reasoning={"effort": "low"})
+            self._track_usage(response.usage, "gpt-5-mini")
+            
+            if return_full_response:
+                return response
+            
+            issues_data = self._parse_json_from_response(response)
+            if isinstance(issues_data, dict):
+                key_with_list = next((k for k, v in issues_data.items() if isinstance(v, list)), None)
+                issues = issues_data[key_with_list] if key_with_list else []
+            else:
+                issues = issues_data
+            
             enriched_issues = []
             for issue in issues[:5]:
-                name = issue.get("issue_name", "")
+                name = issue.get("issue_name", "Unnamed Issue")
                 enriched_issues.append({
                     "issue_name": name,
                     "description": issue.get("description", ""),
                     "severity": issue.get("severity", "medium"),
-                    "review_count": issue.get("frequency", len(negative_reviews)),
+                    "review_count": issue.get("frequency", 1),
                     "example_quote": issue.get("example_quote", ""),
                     "related_quotes": [issue.get("example_quote", "")],
                     "type": self.categorize_issue(name)
                 })
-
             return enriched_issues
-
         except Exception as e:
             logger.error(f"LLM issue extraction failed: {e}")
-            return self.fallback_issue_extraction(negative_reviews)
+            return [] if not return_full_response else None
 
     def categorize_issue(self, issue_name: str) -> str:
         """Enhanced issue categorization combining both approaches."""
@@ -393,115 +362,108 @@ Reviews:
 
         return 'other'
 
-    def analyze_themes_with_llm(self, reviews: List[Dict], product_type: str) -> Dict[str, Any]:
-        """Enhanced theme analysis with better sampling."""
-        print("🎯 Analyzing themes with enhanced LLM...")
+    def analyze_themes_with_llm(self, reviews: List[Dict], product_type: str, previous_response_id: str = None, return_full_response: bool = False) -> Any:
+        """Analyzes themes using the GPT-5 Responses API and context chaining."""
+        logger.info("🎯 Analyzing themes with GPT-5 Mini...")
 
-        # no need to sample for small review set
-        sample_reviews = reviews  
-
-        # Enhanced prompting
-        lines = [
-            f"{i}|{r.get('review_rating','N/A')}|{r['review_text'][:200]}"
-            for i, r in enumerate(sample_reviews)
-        ]
+        # A cleaner format for the input reviews
+        review_lines = "\n".join([f"Review: {r['review_text']}" for r in reviews])
 
         prompt = f"""
-You are a detail-oriented product analyst for {product_type}. Your task is to analyze customer reviews.
+    <instructions>
+    You are a detail-oriented product analyst for {product_type}.
 
-Follow this two-step process:
-1.  **Analysis Step:** Read all reviews and identify 5-8 major themes. For each theme, create a list of the specific positive points and a separate list of the specific negative points or complaints mentioned by users.
-2.  **Formatting Step:** Based on your analysis from Step 1, populate the final JSON structure below. Do not include your reasoning in the final JSON.
+    Follow this two-step process:
+    1.  **Analysis Step:** Read all reviews and identify 5-8 major themes. For each theme, create a list of the specific positive points and a separate list of the specific negative points or complaints mentioned by users.
+    2.  **Formatting Step:** Based on your analysis, populate the final JSON structure below.
 
-The JSON output must have a root key "themes", containing an object for each discovered theme. Each theme object must include sentiment, confidence, and the lists of 'positives' and 'negatives'.
+    The JSON output must have a root key "themes", containing an object for each discovered theme. Each theme object must include sentiment, confidence, and the lists of 'positives' and 'negatives'.
+    </instructions>
 
-Example Output Structure:
-{{
-  "themes": {{
-    "Durability": {{
-      "sentiment": "mixed",
-      "confidence": 0.85,
-      "positives": ["No stick drift after a year"],
-      "negatives": ["Thumbstick plastic grinds on friction rings", "Shoulder buttons failed"]
-    }}
-  }}
-}}
-
-Reviews to Analyze:
-""" + "\n".join(lines)
+    Reviews to Analyze:
+    {review_lines}
+    """
 
         try:
-            response = self.openai_client.chat.completions.create(
-                model="gpt-5",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
-                max_completion_tokens=1000
-            )
+            # Build the parameter dictionary for the API call
+            params = {
+                "model": "gpt-5-mini",
+                "input": prompt,
+                "reasoning": {"effort": "low"}
+            }
+            # Add the previous response ID if it exists to chain the reasoning
+            if previous_response_id:
+                params["previous_response_id"] = previous_response_id
 
-            self._track_usage(response.usage)
+            response = self.openai_client.responses.create(**params)
+            
+            # Return the full response object if needed for further chaining
+            if return_full_response:
+                return response
 
-            content = re.sub(r"^```json|```$", "", response.choices[0].message.content.strip())
-            themes = json.loads(content)
-
-            return themes
+            # Otherwise, parse and return the JSON content
+            raw_output = response.content[0].text
+            themes_data = json.loads(raw_output)
+            
+            # The prompt asks for a root key "themes", so we extract that.
+            return themes_data.get("themes", {})
 
         except Exception as e:
             logger.error(f"Theme analysis failed: {e}")
             return self.fallback_theme_analysis(reviews, product_type)
 
-    def generate_insights_with_llm(self, themes: Dict, issues: List[Dict], metrics: Dict, product_type: str) -> Dict:
-        """Enhanced insights generation with better context."""
-        print("💡 Generating insights with enhanced LLM...")
+    def generate_insights_with_llm(self, themes: Dict, issues: List[Dict], metrics: Dict, product_type: str, previous_response_id: str = None) -> Dict:
+        """Generates final insights using the GPT-5 Responses API and full reasoning context."""
+        logger.info("💡 Generating insights with GPT-5...")
 
         context = {"product_type": product_type, "themes": themes, "issues": issues, "metrics": metrics}
 
         prompt = """
-You are a senior product strategist. Based on the following analysis data, please do the following:
+    <instructions>
+    You are a senior product strategist. Based on the following analysis data, please do the following:
 
-Step 1: Identify key patterns, challenges, or opportunities from the data, paying close attention to the specific `positives` and `negatives` listed within each theme.
-Step 2: Write a clear and concise 2–3 sentence executive summary. Crucially, use the specific details from your analysis instead of generic terms (e.g., mention 'thumbstick grinding' instead of 'durability concerns').
-Step 3: Generate 3 to 5 actionable product or business recommendations that directly address the specific `negatives` you found. For each recommendation, provide the recommendation, priority, impact, and rationale.
-Step 4: Summarize 3 to 6 additional key insights or observations based on the specific `positives` and `negatives`.
+    Step 1: Identify key patterns, challenges, or opportunities from the data, paying close attention to the specific `positives` and `negatives` listed within each theme.
+    Step 2: Write a clear and concise 2–3 sentence executive summary. Crucially, use the specific details from your analysis instead of generic terms (e.g., mention 'thumbstick grinding' instead of 'durability concerns').
+    Step 3: Generate 3 to 5 actionable product or business recommendations that directly address the specific `negatives` you found. For each recommendation, provide the recommendation, priority, impact, and rationale.
+    Step 4: Summarize 3 to 6 additional key insights or observations based on the specific `positives` and `negatives`.
 
-Return the result using this JSON format ONLY:
-{
-  "executive_summary": "",
-  "recommendations": [
+    Return the result using this JSON format ONLY:
     {
-      "recommendation": "",
-      "priority": "high|medium|low",
-      "impact": "",
-      "rationale": ""
+    "executive_summary": "",
+    "recommendations": [...],
+    "key_insights": ["..."]
     }
-  ],
-  "key_insights": ["..."]
-}
+    </instructions>
 
-Do not include anything outside this JSON.
-
-Analysis Data:
-""" + json.dumps(context)
+    Analysis Data:
+    """ + json.dumps(context)
+        
         try:
-            response = self.openai_client.chat.completions.create(
-                model="gpt-5",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-                max_completion_tokens=1000
-            )
+            # Build the parameter dictionary for the API call
+            params = {
+                "model": "gpt-5",
+                "input": prompt,
+                "reasoning": {"effort": "medium"} # Using the default for this complex task
+            }
+            # Add the previous response ID to complete the reasoning chain
+            if previous_response_id:
+                params["previous_response_id"] = previous_response_id
 
-            self._track_usage(response.usage)
+            response = self.openai_client.responses.create(**params)
 
-            content = re.sub(r"^```json|```$", "", response.choices[0].message.content.strip())
+            # Parse the final JSON object from the response
+            raw_output = response.content[0].text
+            content = re.sub(r"^```json|```$", "", raw_output.strip())
             insights = json.loads(content)
-
+            
             return insights
 
         except Exception as e:
             logger.error(f"Insights generation failed: {e}")
             return {
-                "executive_summary": "Analysis completed with mixed results requiring attention.",
-                "recommendations": [{"recommendation": "Review customer feedback patterns", "priority": "medium", "impact": "moderate", "rationale": "Based on analysis"}],
-                "key_insights": ["Customer feedback analysis completed"]
+                "executive_summary": "Analysis failed to generate.",
+                "recommendations": [],
+                "key_insights": []
             }
 
     def get_representative_sample(self, reviews: List[Dict], target_count: int) -> List[Dict]:
@@ -659,38 +621,31 @@ Analysis Data:
         }
 
     def generate_comprehensive_analysis(self, reviews: List[Dict], product_type: str = "product") -> Dict[str, Any]:
-        """Generate comprehensive analysis using the OpenAI API."""
-
-        print(f"🚀 Starting analysis for {len(reviews)} reviews...")
+        logger.info(f"🚀 Starting GPT-5 chained analysis for {len(reviews)} reviews...")
         start_time = time.time()
-
-        # Step 1: Sentiment analysis
+        
         sentiments = self.batch_sentiment_analysis(reviews)
+        
+        issue_response = self.extract_issues_with_llm(reviews, product_type, return_full_response=True)
+        issues = self._parse_json_from_response(issue_response) if issue_response else []
+        
+        previous_id = issue_response.id if issue_response else None
 
-        # Step 2: Issue extraction
-        issues = self.extract_issues_with_llm(reviews, product_type)
+        theme_response = self.analyze_themes_with_llm(reviews, product_type, previous_response_id=previous_id, return_full_response=True)
+        themes = self._parse_json_from_response(theme_response) if theme_response else {}
+        
+        previous_id = theme_response.id if theme_response else None
 
-        # Step 3: Theme analysis
-        themes = self.analyze_themes_with_llm(reviews, product_type)
-
-        # Step 4: Metrics calculation
         metrics = self.calculate_enhanced_metrics(reviews, sentiments)
-
-        # Step 5: Insights generation
-        insights = self.generate_insights_with_llm(themes, issues, metrics, product_type)
-
+        insights = self.generate_insights_with_llm(themes, issues, metrics, product_type, previous_response_id=previous_id)
+        
         analysis_time = time.time() - start_time
-
+        
         return {
-            'themes': themes,
-            'issues': issues,
-            'metrics': metrics,
-            'insights': insights,
+            'themes': themes, 'issues': issues, 'metrics': metrics, 'insights': insights,
             'analysis_metadata': {
-                'total_reviews': len(reviews),
-                'analysis_date': datetime.now().isoformat(),
-                'product_type': product_type,
-                'model_used': 'gpt-5',
+                'total_reviews': len(reviews), 'analysis_date': datetime.now().isoformat(),
+                'product_type': product_type, 'model_used': 'gpt-5-suite',
                 'analysis_time_seconds': round(analysis_time, 2),
                 'token_usage': self.token_usage.copy()
             }
