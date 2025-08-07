@@ -208,7 +208,7 @@ class OpenAIReviewAnalyzer:
             tokens = usage.total_tokens
             self.token_usage['total_tokens'] += tokens
             # Using gpt-4o-mini pricing: $0.150 / 1M input tokens
-            self.token_usage['estimated_cost'] += tokens * 0.150 / 1000000
+            self.token_usage['estimated_cost'] += tokens * 2.5 / 1000000
 
     def batch_sentiment_analysis(self, reviews: List[Dict]) -> List[Dict]:
         """
@@ -244,7 +244,7 @@ Reviews to analyze:
 """
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.0,
                 max_tokens=2000,
@@ -291,18 +291,27 @@ Reviews to analyze:
         print("🤖 Extracting issues with enhanced LLM...")
 
         # Get negative reviews more systematically
-        negative_reviews = [
-            r for r in reviews[:ANALYSIS_REVIEW_LIMIT]
-            if r.get('review_rating', 3) <= 2
-        ][:NEGATIVE_SAMPLE]
-
+        negative_reviews = [r for r in reviews if r.get('review_rating', 3) <= 2]
+        # If there are no negative reviews, consider all of them
         if not negative_reviews:
-            negative_reviews = reviews[:5]
-
+            negative_reviews = reviews
+            
         # Enhanced prompt from original code
         prompt = f"""
-Analyze these {product_type} reviews and extract up to 5 concrete issues.
-Return JSON EXACTLY:
+You are an expert at analyzing user feedback for {product_type} products.
+
+Please follow these steps:
+1. Carefully read the customer reviews provided below.
+2. Identify recurring or serious issues mentioned by multiple users.
+3. Group similar complaints together as one "issue".
+4. For each issue:
+    - Give it a short but descriptive "issue_name"
+    - Summarize it briefly under "description"
+    - Rate its severity as "high", "medium", or "low" based on impact
+    - Count how many users mention this issue as "frequency"
+    - Choose one quote that clearly illustrates the issue as "example_quote"
+
+Return the final result as a JSON array, formatted EXACTLY like this:
 [
  {{
   "issue_name": "unique_name",
@@ -312,12 +321,15 @@ Return JSON EXACTLY:
   "example_quote": "..."
  }},...
 ]
+
+Do not explain anything outside the JSON.
+
 Reviews:
 """ + "\n".join(f"Review {i+1}: {r['review_text'][:250]}" for i, r in enumerate(negative_reviews))
 
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
                 max_tokens=800
@@ -385,8 +397,8 @@ Reviews:
         """Enhanced theme analysis with better sampling."""
         print("🎯 Analyzing themes with enhanced LLM...")
 
-        # Smart sampling: get diverse representative reviews
-        sample_reviews = self.get_representative_sample(reviews, 12)  # Reduced for better token efficiency
+        # no need to sample for small review set
+        sample_reviews = reviews  
 
         # Enhanced prompting
         lines = [
@@ -395,27 +407,42 @@ Reviews:
         ]
 
         prompt = f"""
-Analyze these {product_type} reviews and identify 8-10 specific themes.
-Return JSON EXACTLY:
+You are an expert in customer experience analysis for {product_type}.
+
+Please follow these steps to analyze the reviews:
+1. Read the customer reviews carefully and look for recurring or meaningful patterns.
+2. Group similar feedback into 8 to 10 distinct **themes** (e.g. "battery life", "customer service").
+3. For each theme:
+   - Count how many reviews mention it → "mentions"
+   - Determine sentiment as "positive", "negative", or "mixed"
+   - Assign a confidence score between 0.0 and 1.0 based on clarity and strength of evidence
+   - Extract a few key phrases that represent this theme
+   - Select one representative quote for that theme
+
+Return the result in the following JSON format ONLY:
 {{
- "discovered_themes": ["theme1","theme2",...],
- "sample_size": {len(sample_reviews)},
- "themes": {{
-   "theme1": {{
-     "mentions": number,
-     "sentiment": "positive|negative|mixed",
-     "confidence": 0.0-1.0,
-     "key_phrases": ["..."],
-     "example_quote": "..."
-   }},...
- }}
+  "discovered_themes": ["theme1","theme2",...],
+  "sample_size": {len(sample_reviews)},
+  "themes": {{
+    "theme1": {{
+      "mentions": number,
+      "sentiment": "positive|negative|mixed",
+      "confidence": 0.0-1.0,
+      "key_phrases": ["..."],
+      "example_quote": "..."
+    }},
+    ...
+  }}
 }}
+
+Do not explain anything outside of this JSON.
+
 Reviews:
 """ + "\n".join(lines)
 
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.2,
                 max_tokens=1000
@@ -439,17 +466,38 @@ Reviews:
         context = {"product_type": product_type, "themes": themes, "issues": issues, "metrics": metrics}
 
         prompt = """
-Based on this analysis, provide:
-1. executive_summary (2-3 sentences)
-2. recommendations: array of { recommendation, priority, impact, rationale }
-3. key_insights: array of strings
-Return JSON EXACTLY:
-{"executive_summary":"","recommendations":[{"recommendation":"","priority":"high|medium|low","impact":"","rationale":""}],"key_insights":["..."]}
-""" + json.dumps(context)
+You are a senior product strategist. Based on the following analysis data, please do the following:
 
+Step 1: Identify key patterns, challenges, or opportunities from the data.
+Step 2: Write a clear and concise 2–3 sentence executive summary capturing the most important takeaway.
+Step 3: Generate 3 to 5 actionable product or business recommendations. For each recommendation:
+  - Write a clear and concise recommendation.
+  - Assign a priority: "high", "medium", or "low"
+  - Describe the expected impact.
+  - Explain the rationale behind the suggestion.
+Step 4: Summarize 3 to 6 additional key insights or observations from the data.
+
+Return the result using this JSON format ONLY:
+{
+  "executive_summary": "",
+  "recommendations": [
+    {
+      "recommendation": "",
+      "priority": "high|medium|low",
+      "impact": "",
+      "rationale": ""
+    }
+  ],
+  "key_insights": ["..."]
+}
+
+Do not include anything outside this JSON.
+
+Analysis Data:
+""" + json.dumps(context, indent=2)
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
                 max_tokens=1000
@@ -656,7 +704,7 @@ Return JSON EXACTLY:
                 'total_reviews': len(reviews),
                 'analysis_date': datetime.now().isoformat(),
                 'product_type': product_type,
-                'model_used': 'gpt-4o-mini',
+                'model_used': 'gpt-4o',
                 'analysis_time_seconds': round(analysis_time, 2),
                 'token_usage': self.token_usage.copy()
             }
