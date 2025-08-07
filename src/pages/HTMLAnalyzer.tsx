@@ -554,23 +554,7 @@ function HTMLAnalyzer() {
     setSelectedReview(null);
   }, []);
 
-  const findRelatedReview = useCallback(
-    (theme: string) => {
-      const matchingReview = results?.reviews?.find((review) =>
-        review.toLowerCase().includes(theme.toLowerCase())
-      );
-
-      if (matchingReview) {
-        setSelectedReview(matchingReview);
-        setTimeout(() => {
-          document.getElementById("selected-review")?.scrollIntoView({
-            behavior: "smooth",
-          });
-        }, 100);
-      }
-    },
-    [results?.reviews]
-  );
+  
 
   return (
     <main className="p-8 max-w-4xl mx-auto">
