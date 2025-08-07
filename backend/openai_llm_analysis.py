@@ -207,8 +207,8 @@ class OpenAIReviewAnalyzer:
         if usage:
             tokens = usage.total_tokens
             self.token_usage['total_tokens'] += tokens
-            # Using gpt-4o-mini pricing: $0.150 / 1M input tokens
-            self.token_usage['estimated_cost'] += tokens * 2.5 / 1000000
+            # Using gpt-5 pricing: $0.150 / 1M input tokens
+            self.token_usage['estimated_cost'] += tokens * 1.25 / 1000000
 
     def batch_sentiment_analysis(self, reviews: List[Dict]) -> List[Dict]:
         """
@@ -244,7 +244,7 @@ Reviews to analyze:
 """
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-5",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.0,
                 max_tokens=2000,
@@ -329,7 +329,7 @@ Reviews:
 
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-5",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
                 max_tokens=800
@@ -407,42 +407,32 @@ Reviews:
         ]
 
         prompt = f"""
-You are an expert in customer experience analysis for {product_type}.
+You are a detail-oriented product analyst for {product_type}. Your task is to analyze customer reviews.
 
-Please follow these steps to analyze the reviews:
-1. Read the customer reviews carefully and look for recurring or meaningful patterns.
-2. Group similar feedback into 8 to 10 distinct **themes** (e.g. "battery life", "customer service").
-3. For each theme:
-   - Count how many reviews mention it → "mentions"
-   - Determine sentiment as "positive", "negative", or "mixed"
-   - Assign a confidence score between 0.0 and 1.0 based on clarity and strength of evidence
-   - Extract a few key phrases that represent this theme
-   - Select one representative quote for that theme
+Follow this two-step process:
+1.  **Analysis Step:** Read all reviews and identify 5-8 major themes. For each theme, create a list of the specific positive points and a separate list of the specific negative points or complaints mentioned by users.
+2.  **Formatting Step:** Based on your analysis from Step 1, populate the final JSON structure below. Do not include your reasoning in the final JSON.
 
-Return the result in the following JSON format ONLY:
+The JSON output must have a root key "themes", containing an object for each discovered theme. Each theme object must include sentiment, confidence, and the lists of 'positives' and 'negatives'.
+
+Example Output Structure:
 {{
-  "discovered_themes": ["theme1","theme2",...],
-  "sample_size": {len(sample_reviews)},
   "themes": {{
-    "theme1": {{
-      "mentions": number,
-      "sentiment": "positive|negative|mixed",
-      "confidence": 0.0-1.0,
-      "key_phrases": ["..."],
-      "example_quote": "..."
-    }},
-    ...
+    "Durability": {{
+      "sentiment": "mixed",
+      "confidence": 0.85,
+      "positives": ["No stick drift after a year"],
+      "negatives": ["Thumbstick plastic grinds on friction rings", "Shoulder buttons failed"]
+    }}
   }}
 }}
 
-Do not explain anything outside of this JSON.
-
-Reviews:
+Reviews to Analyze:
 """ + "\n".join(lines)
 
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-5",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.2,
                 max_tokens=1000
@@ -468,14 +458,10 @@ Reviews:
         prompt = """
 You are a senior product strategist. Based on the following analysis data, please do the following:
 
-Step 1: Identify key patterns, challenges, or opportunities from the data.
-Step 2: Write a clear and concise 2–3 sentence executive summary capturing the most important takeaway.
-Step 3: Generate 3 to 5 actionable product or business recommendations. For each recommendation:
-  - Write a clear and concise recommendation.
-  - Assign a priority: "high", "medium", or "low"
-  - Describe the expected impact.
-  - Explain the rationale behind the suggestion.
-Step 4: Summarize 3 to 6 additional key insights or observations from the data.
+Step 1: Identify key patterns, challenges, or opportunities from the data, paying close attention to the specific `positives` and `negatives` listed within each theme.
+Step 2: Write a clear and concise 2–3 sentence executive summary. Crucially, use the specific details from your analysis instead of generic terms (e.g., mention 'thumbstick grinding' instead of 'durability concerns').
+Step 3: Generate 3 to 5 actionable product or business recommendations that directly address the specific `negatives` you found. For each recommendation, provide the recommendation, priority, impact, and rationale.
+Step 4: Summarize 3 to 6 additional key insights or observations based on the specific `positives` and `negatives`.
 
 Return the result using this JSON format ONLY:
 {
@@ -494,10 +480,10 @@ Return the result using this JSON format ONLY:
 Do not include anything outside this JSON.
 
 Analysis Data:
-""" + json.dumps(context, indent=2)
+""" + json.dumps(context)
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-5",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
                 max_tokens=1000
@@ -704,7 +690,7 @@ Analysis Data:
                 'total_reviews': len(reviews),
                 'analysis_date': datetime.now().isoformat(),
                 'product_type': product_type,
-                'model_used': 'gpt-4o',
+                'model_used': 'gpt-5',
                 'analysis_time_seconds': round(analysis_time, 2),
                 'token_usage': self.token_usage.copy()
             }
