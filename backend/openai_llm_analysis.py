@@ -247,7 +247,7 @@ Reviews to analyze:
                 model="gpt-5",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.0,
-                max_tokens=2000,
+                max_completion_tokens=2000,
                 response_format={"type": "json_object"}
             )
             self._track_usage(response.usage)
@@ -332,7 +332,7 @@ Reviews:
                 model="gpt-5",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
-                max_tokens=800
+                max_completion_tokens=800
             )
 
             self._track_usage(response.usage)
@@ -435,7 +435,7 @@ Reviews to Analyze:
                 model="gpt-5",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.2,
-                max_tokens=1000
+                max_completion_tokens=1000
             )
 
             self._track_usage(response.usage)
@@ -486,7 +486,7 @@ Analysis Data:
                 model="gpt-5",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
-                max_tokens=1000
+                max_completion_tokens=1000
             )
 
             self._track_usage(response.usage)
