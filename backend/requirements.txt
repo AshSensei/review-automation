@@ -1,8 +1,7 @@
-Flask==3.1.1
-flask-cors==6.0.1
-beautifulsoup4==4.13.4
-python-dotenv==1.1.1
-openai==1.93.3
-transformers==4.41.1
-textstat==0.7.3
-nltk==3.8.1
+beautifulsoup4>=4.12.2
+flask>=2.3.2
+flask-cors>=4.0.0
+openai>=1.2.3
+nltk>=3.8.1
+textstat>=0.7.3
+python-dotenv>=1.0.0
