@@ -10,8 +10,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useState, useCallback } from "react";
-import { ThumbsUp, ThumbsDown, Lightbulb, Minus } from "lucide-react";
-import { FadeTransition } from '../components/ui/FadeTransition';
+import {
+  ThumbsUp,
+  ThumbsDown,
+  Lightbulb,
+  Minus,
+  ClipboardCopy,
+  Check,
+} from "lucide-react";
 
 // Types and Interfaces
 type TokenUsage = { total_tokens: number; estimated_cost: number };
@@ -58,6 +64,11 @@ type Insights = {
   executive_summary: string;
   recommendations: Recommendation[];
   key_insights: string[];
+  sentiment_breakdown?: {
+    positive?: number;
+    negative?: number;
+    neutral?: number;
+  };
 };
 type AnalysisResult = {
   analysis_metadata: AnalysisMetadata;
@@ -89,13 +100,12 @@ const getSentimentColor = (sentiment: SentimentType): string => {
 };
 
 const getPriorityColor = (priority: PriorityType): string => {
-  // Fixed with explicit class names that Tailwind can compile
   switch (priority) {
-    case 'high':
+    case "high":
       return "bg-red-100 text-red-800 border-red-300";
-    case 'medium':
+    case "medium":
       return "bg-yellow-100 text-yellow-800 border-yellow-300";
-    case 'low':
+    case "low":
       return "bg-green-100 text-green-800 border-green-300";
     default:
       return "bg-gray-100 text-gray-800 border-gray-300";
@@ -103,45 +113,47 @@ const getPriorityColor = (priority: PriorityType): string => {
 };
 
 // Helper function to calculate sentiment from themes and issues
-// Helper function to calculate sentiment from themes and issues
 const calculateSentimentFromData = (results: AnalysisResult) => {
   // If sentiment_distribution exists in metrics, use it directly
-  if (results.metrics?.sentiment_distribution && 
-      (results.metrics.sentiment_distribution.positive || 
-       results.metrics.sentiment_distribution.negative || 
-       results.metrics.sentiment_distribution.neutral)) {
+  if (
+    results.metrics?.sentiment_distribution &&
+    (results.metrics.sentiment_distribution.positive ||
+      results.metrics.sentiment_distribution.negative ||
+      results.metrics.sentiment_distribution.neutral)
+  ) {
     return results.metrics.sentiment_distribution;
   }
-  
-  const totalReviews = results.analysis_metadata?.total_reviews || results.reviews?.length || 0;
-  
+
+  const totalReviews =
+    results.analysis_metadata?.total_reviews || results.reviews?.length || 0;
+
   if (totalReviews === 0) {
     return { positive: 0, negative: 0, neutral: 0 };
   }
-  
+
   // Simple approach: count themes and issues directly
   let positive = 0;
   let negative = 0;
   let neutral = 0;
-  
+
   if (results.themes) {
-    Object.values(results.themes).forEach(theme => {
-      if (theme.sentiment === 'positive') {
+    Object.values(results.themes).forEach((theme) => {
+      if (theme.sentiment === "positive") {
         positive += 5; // Each positive theme represents ~5 reviews
-      } else if (theme.sentiment === 'negative') {
+      } else if (theme.sentiment === "negative") {
         negative += 5; // Each negative theme represents ~5 reviews
-      } else if (theme.sentiment === 'mixed') {
+      } else if (theme.sentiment === "mixed") {
         neutral += 3; // Mixed themes contribute to neutral
         negative += 2; // But also some negative
       }
     });
   }
-  
+
   // Add issues as strong negative indicators
   if (results.issues) {
     negative += results.issues.length * 3; // Each issue represents ~3 negative reviews
   }
-  
+
   // Scale to match total reviews
   const calculatedTotal = positive + negative + neutral;
   if (calculatedTotal > 0 && calculatedTotal !== totalReviews) {
@@ -149,14 +161,14 @@ const calculateSentimentFromData = (results: AnalysisResult) => {
     positive = Math.round(positive * scale);
     negative = Math.round(negative * scale);
     neutral = Math.round(neutral * scale);
-    
+
     // Adjust for rounding errors
     const diff = totalReviews - (positive + negative + neutral);
     if (diff !== 0) {
       neutral += diff; // Add any difference to neutral
     }
   }
-  
+
   return { positive, negative, neutral };
 };
 
@@ -168,7 +180,9 @@ interface StatusUpdate {
 // Custom Hooks
 const useStatusCycling = () => {
   const [statusUpdates, setStatusUpdates] = useState<StatusUpdate[]>([]);
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [intervalId, setIntervalId] = useState<ReturnType<
+    typeof setInterval
+  > | null>(null);
 
   const statusMessages = [
     "🔍 Parsing HTML content...",
@@ -220,10 +234,24 @@ const useStatusCycling = () => {
   return { statusUpdates, start, stop, clear };
 };
 
-// LoadingCarousel component (matches your original)
+// Simple FadeTransition component
+const FadeTransition = ({
+  children,
+  animationKey,
+}: {
+  children: React.ReactNode;
+  animationKey: number;
+}) => {
+  return (
+    <div key={animationKey} className="transition-opacity duration-300">
+      {children}
+    </div>
+  );
+};
+
+// LoadingCarousel component
 const LoadingCarousel = ({ status }: { status: StatusUpdate | null }) => {
   return (
-    // The container needs a fixed height to prevent layout shifts during the animation
     <div className="flex items-center justify-center p-8 bg-blue-50 rounded-lg h-20">
       <FadeTransition animationKey={status?.timestamp || 0}>
         <span className="text-blue-800 text-center">
@@ -303,14 +331,15 @@ const ThemeDetailCard = ({
 };
 
 // Fixed SentimentCard component
-const SentimentCard = ({
-  results,
-}: {
-  results: AnalysisResult;
-}) => {
+const SentimentCard = ({ results }: { results: AnalysisResult }) => {
   const sentiment = calculateSentimentFromData(results);
-  
-  if (!sentiment || (sentiment.positive === 0 && sentiment.negative === 0 && sentiment.neutral === 0)) {
+
+  if (
+    !sentiment ||
+    (sentiment.positive === 0 &&
+      sentiment.negative === 0 &&
+      sentiment.neutral === 0)
+  ) {
     return null;
   }
 
@@ -324,10 +353,10 @@ const SentimentCard = ({
       iconColor: "text-green-600",
       countColor: "text-green-600",
     },
-    { 
-      type: "neutral", 
-      count: sentiment.neutral || 0, 
-      icon: Minus, 
+    {
+      type: "neutral",
+      count: sentiment.neutral || 0,
+      icon: Minus,
       bgColor: "bg-gray-50",
       textColor: "text-gray-800",
       iconColor: "text-gray-600",
@@ -351,27 +380,34 @@ const SentimentCard = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {items.map(({ type, count, icon: Icon, bgColor, textColor, iconColor, countColor }) => (
-            <div
-              key={type}
-              className={`flex items-center justify-between p-3 ${bgColor} rounded-md`}
-            >
-              <div className="flex items-center gap-2">
-                <Icon
-                  className={`w-4 h-4 ${iconColor}`}
-                  aria-hidden="true"
-                />
-                <span
-                  className={`text-sm font-medium ${textColor} capitalize`}
-                >
-                  {type}
+          {items.map(
+            ({
+              type,
+              count,
+              icon: Icon,
+              bgColor,
+              textColor,
+              iconColor,
+              countColor,
+            }) => (
+              <div
+                key={type}
+                className={`flex items-center justify-between p-3 ${bgColor} rounded-md`}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className={`w-4 h-4 ${iconColor}`} aria-hidden="true" />
+                  <span
+                    className={`text-sm font-medium ${textColor} capitalize`}
+                  >
+                    {type}
+                  </span>
+                </div>
+                <span className={`text-2xl font-bold ${countColor}`}>
+                  {count}
                 </span>
               </div>
-              <span className={`text-2xl font-bold ${countColor}`}>
-                {count}
-              </span>
-            </div>
-          ))}
+            )
+          )}
         </div>
       </CardContent>
     </Card>
@@ -462,14 +498,100 @@ const RecommendationCard = ({
   </article>
 );
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/";
+const API_BASE = "http://localhost:5000/";
+
+// Fixed generateReportText function
+const generateReportText = (results: AnalysisResult): string => {
+  const { insights, analysis_metadata, themes, issues } = results;
+
+  const keyInsights =
+    insights?.key_insights?.map((i) => `- ${i}`).join("\n") || "";
+
+  const recommendations = (insights?.recommendations || [])
+    .map(
+      (r) =>
+        `### ${r.recommendation} (Priority: ${r.priority})\nRationale: ${r.rationale}`
+    )
+    .join("\n\n");
+
+  const themeDetails = Object.entries(themes || {})
+    .map(
+      ([themeName, t]) =>
+        `### Theme: ${formatIssueName(themeName)} (Sentiment: ${
+          t.sentiment
+        })\n` +
+        `Positives:\n${
+          t.positives?.map((p) => `- ${p}`).join("\n") || "- None"
+        }\n` +
+        `Negatives:\n${
+          t.negatives?.map((n) => `- ${n}`).join("\n") || "- None"
+        }\n` +
+        `Example Quote: "${t.example_quote || ""}"`
+    )
+    .join("\n\n");
+
+  const issuesDetails = (issues || [])
+    .map(
+      (issue) =>
+        `### Issue: ${formatIssueName(issue.issue_name)} (Severity: ${
+          issue.severity
+        })\n` +
+        `Description: ${issue.description}\n` +
+        `Example Quote: "${issue.example_quote || ""}"`
+    )
+    .join("\n\n");
+
+  const sentiment = calculateSentimentFromData(results);
+
+  return `# Analysis Report
+
+## Executive Summary
+${insights?.executive_summary || "No executive summary available."}
+
+## Key Insights
+${keyInsights || "No key insights found."}
+
+## Analysis Metrics
+- Total Reviews: ${analysis_metadata?.total_reviews || 0}
+- Positive Sentiment: ${sentiment?.positive || 0}
+- Negative Sentiment: ${sentiment?.negative || 0}
+- Neutral Sentiment: ${sentiment?.neutral || 0}
+- Themes Found: ${Object.keys(themes || {}).length}
+- Issues Found: ${(issues || []).length}
+
+## Actionable Recommendations
+${recommendations || "No recommendations available."}
+
+## Detailed Theme Analysis
+${themeDetails || "No themes found."}
+
+## Common Issues
+${issuesDetails || "No issues found."}
+
+---
+Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`;
+};
 
 // Main Component
 function HTMLAnalyzer() {
   const [htmlInput, setHtmlInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
   const [error, setError] = useState("");
+
+  const handleCopyReport = async () => {
+    if (!results) return;
+    try {
+      const reportText = generateReportText(results);
+      await navigator.clipboard.writeText(reportText);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy report:", err);
+      setError("Failed to copy report to clipboard");
+    }
+  };
 
   const {
     statusUpdates,
@@ -523,9 +645,9 @@ function HTMLAnalyzer() {
     setHtmlInput("");
     setResults(null);
     setError("");
+    setCopySuccess(false);
     clearStatus();
   }, [clearStatus]);
-
 
   return (
     <main className="p-8 max-w-4xl mx-auto">
@@ -585,6 +707,26 @@ function HTMLAnalyzer() {
 
       {results && (
         <section aria-label="Analysis Results" className="space-y-6">
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              aria-label="Copy full analysis report to clipboard"
+              onClick={handleCopyReport}
+            >
+              {copySuccess ? (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <ClipboardCopy className="mr-2 h-4 w-4" />
+                  Copy Report
+                </>
+              )}
+            </Button>
+          </div>
+
           {/* Executive Summary */}
           {results.insights?.executive_summary && (
             <Card>
@@ -621,7 +763,7 @@ function HTMLAnalyzer() {
             </Card>
           )}
 
-          {/* Analysis Metrics - NOW INCLUDES WORKING SENTIMENT CARD */}
+          {/* Analysis Metrics */}
           <section
             aria-label="Analysis Metrics"
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
@@ -634,7 +776,7 @@ function HTMLAnalyzer() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {results.analysis_metadata.analysis_time_seconds && (
+                  {results.analysis_metadata?.analysis_time_seconds && (
                     <div className="flex items-center justify-between p-3 bg-purple-50 rounded-md">
                       <span className="text-sm font-medium text-purple-800">
                         Analysis Time
@@ -647,7 +789,7 @@ function HTMLAnalyzer() {
                       </span>
                     </div>
                   )}
-                  {results.analysis_metadata.token_usage && (
+                  {results.analysis_metadata?.token_usage && (
                     <div className="flex items-center justify-between p-3 bg-orange-50 rounded-md">
                       <span className="text-sm font-medium text-orange-800">
                         Tokens Used
@@ -657,7 +799,7 @@ function HTMLAnalyzer() {
                       </span>
                     </div>
                   )}
-                  {results.analysis_metadata.model_used && (
+                  {results.analysis_metadata?.model_used && (
                     <div className="p-3 bg-gray-50 rounded-md">
                       <span className="text-sm font-medium text-gray-800">
                         Model:{" "}
@@ -679,8 +821,8 @@ function HTMLAnalyzer() {
                 <CardHeader>
                   <CardTitle>Detailed Theme Analysis</CardTitle>
                   <p className="text-sm text-gray-600">
-                    Analysis based on {results.analysis_metadata.total_reviews}{" "}
-                    reviews
+                    Analysis based on{" "}
+                    {results.analysis_metadata?.total_reviews || 0} reviews
                   </p>
                 </CardHeader>
               </Card>
@@ -698,7 +840,7 @@ function HTMLAnalyzer() {
             </section>
           )}
 
-          {/* Recommendations - NOW WITH WORKING PRIORITY COLORS */}
+          {/* Recommendations */}
           {results.insights?.recommendations?.length > 0 && (
             <Card>
               <CardHeader>
@@ -767,7 +909,6 @@ function HTMLAnalyzer() {
               </CardContent>
             </Card>
           )}
-
 
           {/* Full JSON Output */}
           <Card>
