@@ -500,76 +500,278 @@ const RecommendationCard = ({
 
 const API_BASE = "http://localhost:5000/";
 
-// Fixed generateReportText function
-const generateReportText = (results: AnalysisResult): string => {
+// Enhanced HTML report generation function
+const generateReportHTML = (results: AnalysisResult): string => {
   const { insights, analysis_metadata, themes, issues } = results;
+  const sentiment = calculateSentimentFromData(results);
 
   const keyInsights =
-    insights?.key_insights?.map((i) => `- ${i}`).join("\n") || "";
+    insights?.key_insights?.map((i) => `<li>${i}</li>`).join("") ||
+    "<li>No key insights found.</li>";
 
+  // Modified to integrate the priority badge directly into the heading
   const recommendations = (insights?.recommendations || [])
     .map(
-      (r) =>
-        `### ${r.recommendation} (Priority: ${r.priority})\nRationale: ${r.rationale}`
+      (r) => `
+      <div class="recommendation">
+        <h4>
+          ${r.recommendation}
+          <span class="priority-badge priority-${r.priority}">(${r.priority} priority)</span>
+        </h4>
+        <p><strong>Rationale:</strong> ${r.rationale}</p>
+      </div>
+    `
     )
-    .join("\n\n");
+    .join("");
 
   const themeDetails = Object.entries(themes || {})
     .map(
-      ([themeName, t]) =>
-        `### Theme: ${formatIssueName(themeName)} (Sentiment: ${
-          t.sentiment
-        })\n` +
-        `Positives:\n${
-          t.positives?.map((p) => `- ${p}`).join("\n") || "- None"
-        }\n` +
-        `Negatives:\n${
-          t.negatives?.map((n) => `- ${n}`).join("\n") || "- None"
-        }\n` +
-        `Example Quote: "${t.example_quote || ""}"`
+      ([themeName, t]) => `
+      <div class="theme-section">
+        <h4>
+          ${formatIssueName(themeName)}
+          <span class="sentiment-badge sentiment-${t.sentiment}">(${
+        t.sentiment
+      })</span>
+        </h4>
+        ${
+          t.positives?.length > 0
+            ? `
+          <div class="positives">
+            <strong>Positives:</strong>
+            <ul>${t.positives.map((p) => `<li>${p}</li>`).join("")}</ul>
+          </div>`
+            : ""
+        }
+        ${
+          t.negatives?.length > 0
+            ? `
+          <div class="negatives">
+            <strong>Negatives:</strong>
+            <ul>${t.negatives.map((n) => `<li>${n}</li>`).join("")}</ul>
+          </div>`
+            : ""
+        }
+        ${
+          t.example_quote
+            ? `
+          <div class="example-quote">
+            <strong>Example Quote:</strong>
+            <blockquote>"${t.example_quote}"</blockquote>
+          </div>`
+            : ""
+        }
+      </div>
+    `
     )
-    .join("\n\n");
+    .join("");
 
   const issuesDetails = (issues || [])
     .map(
-      (issue) =>
-        `### Issue: ${formatIssueName(issue.issue_name)} (Severity: ${
-          issue.severity
-        })\n` +
-        `Description: ${issue.description}\n` +
-        `Example Quote: "${issue.example_quote || ""}"`
+      (issue) => `
+      <div class="issue-section">
+        <h4>
+          ${formatIssueName(issue.issue_name)}
+          <span class="severity-badge severity-${issue.severity}">(${
+        issue.severity
+      } severity)</span>
+        </h4>
+        <p><strong>Description:</strong> ${issue.description}</p>
+        ${
+          issue.example_quote
+            ? `
+          <div class="example-quote">
+            <strong>Example Quote:</strong>
+            <blockquote>"${issue.example_quote}"</blockquote>
+          </div>`
+            : ""
+        }
+      </div>
+    `
     )
-    .join("\n\n");
+    .join("");
 
-  const sentiment = calculateSentimentFromData(results);
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Analysis Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: white;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    .header {
+      text-align: left;
+      border-bottom: 2px solid #333;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+    }
+    .header h1 {
+      font-size: 2.2rem;
+      color: #000;
+      margin: 0;
+    }
+    .header .timestamp {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 0.5rem;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    .section h2 {
+      font-size: 1.5rem;
+      color: #000;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 0.5rem;
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+    }
+    h4 {
+      font-size: 1.1rem;
+      color: #000;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      margin-top: 0;
+    }
+    ul {
+      padding-left: 20px;
+      margin-top: 0.5rem;
+    }
+    li {
+      margin-bottom: 0.5rem;
+    }
+    strong {
+      color: #000;
+    }
+    /* Simplified Metrics */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.5rem;
+    }
+    .metric {
+      padding: 0.5rem;
+      border: 1px solid #eee;
+      border-radius: 4px;
+    }
+    .metric .label {
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .metric .value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #000;
+    }
+    /* Simplified Sections */
+    .executive-summary,
+    .recommendation,
+    .theme-section,
+    .issue-section {
+      padding: 1rem;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    /* Text-based Badges (No Backgrounds) */
+    .priority-badge,
+    .sentiment-badge,
+    .severity-badge {
+      font-weight: bold;
+      font-size: 0.9em;
+      text-transform: capitalize;
+    }
+    .priority-high, .severity-high, .sentiment-negative { color: #c00; }
+    .priority-medium, .severity-medium, .sentiment-mixed { color: #c80; }
+    .priority-low, .severity-low, .sentiment-positive { color: #080; }
+    .positives strong { color: #080; }
+    .negatives strong { color: #c00; }
+    /* Quotes */
+    .example-quote { margin-top: 1rem; }
+    .example-quote blockquote {
+      border-left: 3px solid #ccc;
+      padding-left: 1rem;
+      margin: 0.5rem 0 0 0;
+      font-style: italic;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 Analysis Report</h1>
+    <div class="timestamp">Generated on ${new Date().toLocaleString()}</div>
+  </div>
 
-  return `# Analysis Report
+  <div class="section">
+    <h2>📋 Executive Summary</h2>
+    <div class="executive-summary">
+      <p>${insights?.executive_summary || "No executive summary available."}</p>
+    </div>
+  </div>
 
-## Executive Summary
-${insights?.executive_summary || "No executive summary available."}
+  <div class="section">
+    <h2>💡 Key Insights</h2>
+    <div class="insights-list">
+      <ul>${keyInsights}</ul>
+    </div>
+  </div>
 
-## Key Insights
-${keyInsights || "No key insights found."}
+  <div class="section">
+    <h2>📊 Analysis Metrics</h2>
+    <div class="metrics-grid">
+      <div class="metric">
+        <div class="label">Total Reviews</div>
+        <div class="value">${analysis_metadata?.total_reviews || 0}</div>
+      </div>
+      <div class="metric">
+        <div class="label">Positive Sentiment</div>
+        <div class="value">${sentiment?.positive || 0}</div>
+      </div>
+      <div class="metric">
+        <div class="label">Negative Sentiment</div>
+        <div class="value">${sentiment?.negative || 0}</div>
+      </div>
+      <div class="metric">
+        <div class="label">Neutral Sentiment</div>
+        <div class="value">${sentiment?.neutral || 0}</div>
+      </div>
+      <div class="metric">
+        <div class="label">Themes Found</div>
+        <div class="value">${Object.keys(themes || {}).length}</div>
+      </div>
+      <div class="metric">
+        <div class="label">Issues Found</div>
+        <div class="value">${(issues || []).length}</div>
+      </div>
+    </div>
+  </div>
 
-## Analysis Metrics
-- Total Reviews: ${analysis_metadata?.total_reviews || 0}
-- Positive Sentiment: ${sentiment?.positive || 0}
-- Negative Sentiment: ${sentiment?.negative || 0}
-- Neutral Sentiment: ${sentiment?.neutral || 0}
-- Themes Found: ${Object.keys(themes || {}).length}
-- Issues Found: ${(issues || []).length}
+  <div class="section">
+    <h2>🎯 Actionable Recommendations</h2>
+    ${recommendations || "<p>No recommendations available.</p>"}
+  </div>
 
-## Actionable Recommendations
-${recommendations || "No recommendations available."}
+  <div class="section">
+    <h2>🔍 Detailed Theme Analysis</h2>
+    ${themeDetails || "<p>No themes found.</p>"}
+  </div>
 
-## Detailed Theme Analysis
-${themeDetails || "No themes found."}
-
-## Common Issues
-${issuesDetails || "No issues found."}
-
----
-Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`;
+  <div class="section">
+    <h2>⚠️ Common Issues</h2>
+    ${issuesDetails || "<p>No issues found.</p>"}
+  </div>
+</body>
+</html>`;
 };
 
 // Main Component
@@ -582,14 +784,42 @@ function HTMLAnalyzer() {
 
   const handleCopyReport = async () => {
     if (!results) return;
+
     try {
-      const reportText = generateReportText(results);
-      await navigator.clipboard.writeText(reportText);
+      const reportHTML = generateReportHTML(results);
+
+      // Generate a plain text version for the fallback by stripping HTML tags.
+      const tempEl = document.createElement("div");
+      tempEl.innerHTML = reportHTML;
+      // FIX: Get innerText directly from the temporary element.
+      const reportText = tempEl.innerText || "";
+
+      // Attempt to copy as rich text using the modern Clipboard API
+      try {
+        const htmlBlob = new Blob([reportHTML], { type: "text/html" });
+        const textBlob = new Blob([reportText], { type: "text/plain" });
+
+        // The ClipboardItem provides both formats.
+        const clipboardItem = new ClipboardItem({
+          "text/html": htmlBlob,
+          "text/plain": textBlob,
+        });
+
+        await navigator.clipboard.write([clipboardItem]);
+      } catch (richTextError) {
+        console.error(
+          "Rich text copy failed, falling back to plain text:",
+          richTextError
+        );
+        // If rich text fails, fall back to plain text copy.
+        await navigator.clipboard.writeText(reportText);
+      }
+
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
       console.error("Failed to copy report:", err);
-      setError("Failed to copy report to clipboard");
+      setError("Failed to copy report to clipboard.");
     }
   };
 
