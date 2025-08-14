@@ -18,10 +18,10 @@ from openai import OpenAI
 load_dotenv()
 
 # Memory-safety caps
-MAX_HTML_SIZE = 3 * 1024 * 1024  # 3MB
-PARSE_HTML_LIMIT = 30  # max reviews to parse
-ANALYSIS_REVIEW_LIMIT = 30  # max reviews to analyze
-NEGATIVE_SAMPLE = 5  # negative reviews sample size
+MAX_HTML_SIZE = 3 * 1024 * 1024 * 5 # 3MB
+PARSE_HTML_LIMIT = 200  # max reviews to parse
+ANALYSIS_REVIEW_LIMIT = 200  # max reviews to analyze
+NEGATIVE_SAMPLE = 200  # negative reviews sample size
 MAX_ISSUES_TO_ENRICH = 5
 # Configure logging
 logging.basicConfig(level=logging.INFO)
