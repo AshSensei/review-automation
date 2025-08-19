@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -522,6 +522,10 @@ export default function CompetitorAnalyzer() {
   const [results, setResults] = useState<FullApiResponse | null>(null);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+      // This line runs when the component mounts
+      document.title = 'Competitor Analyzer';
+    }, []);
   const {
     statusUpdates,
     start: startStatus,

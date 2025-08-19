@@ -9,7 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect} from "react";
 import {
   ThumbsUp,
   ThumbsDown,
@@ -781,7 +781,10 @@ function HTMLAnalyzer() {
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [error, setError] = useState("");
-
+  useEffect(() => {
+    // This line runs when the component mounts
+    document.title = 'HTML Analyzer';
+  }, []);
   const handleCopyReport = async () => {
     if (!results) return;
 

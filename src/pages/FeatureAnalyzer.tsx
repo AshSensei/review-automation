@@ -299,6 +299,10 @@ function FeatureAnalyzer() {
   React.useEffect(() => {
     checkApiHealth();
   }, []);
+  React.useEffect(() => {
+      // This line runs when the component mounts
+      document.title = 'Feature Analyzer';
+    }, []);
 
   const checkApiHealth = async () => {
     try {
