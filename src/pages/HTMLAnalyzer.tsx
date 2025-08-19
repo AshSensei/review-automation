@@ -18,9 +18,13 @@ import {
   ClipboardCopy,
   Check,
 } from "lucide-react";
-
+import { FadeTransition } from "@/components/ui/FadeTransition";
 // Types and Interfaces
-type TokenUsage = { total_tokens: number; estimated_cost: number };
+type TokenUsage = {
+  total_tokens: number;
+  estimated_cost: number;
+};
+
 type AnalysisMetadata = {
   total_reviews: number;
   analysis_date: string;
@@ -29,58 +33,82 @@ type AnalysisMetadata = {
   analysis_time_seconds: number;
   token_usage: TokenUsage;
 };
+
 type Recommendation = {
   recommendation: string;
-  priority: "high" | "medium" | "low";
+  // Priority is now a flexible string to accommodate values like "P0 - Critical"
+  priority: string;
   impact: string;
   rationale: string;
+};
+
+type Insights = {
+  executive_summary: string;
+  recommendations: Recommendation[];
+  key_insights: string[];
 };
 
 type Issue = {
   issue_name: string;
   description: string;
+  // Severity remains a union type as the values are consistent
   severity: "high" | "medium" | "low";
   frequency: number;
   example_quote: string;
 };
+
 type ThemeData = {
-  sentiment: "positive" | "negative" | "mixed";
+  // Sentiment is now a flexible string for values like "mixed_positive"
+  sentiment: string;
   confidence: number;
   positives: string[];
   negatives: string[];
   example_quote: string;
 };
-type Themes = { [themeName: string]: ThemeData };
+
+// Represents an object where each key is a theme name
+type Themes = {
+  [themeName: string]: ThemeData;
+};
+
+// Represents the new top-level sentiment object
+type SentimentDistribution = {
+  positive: number;
+  negative: number;
+  neutral: number;
+};
+
+
+// --- Main Top-Level Type ---
+
+// Define the (now optional) Metrics type
 type Metrics = {
   total_reviews: number;
   average_rating: number;
-  sentiment_distribution: {
+  sentiment_distribution?: {
     positive?: number;
     negative?: number;
     neutral?: number;
   };
 };
-type Insights = {
-  executive_summary: string;
-  recommendations: Recommendation[];
-  key_insights: string[];
-  sentiment_breakdown?: {
-    positive?: number;
-    negative?: number;
-    neutral?: number;
-  };
-};
+
+// --- Main Top-Level Type ---
+
 type AnalysisResult = {
   analysis_metadata: AnalysisMetadata;
   insights: Insights;
   issues: Issue[];
   themes: Themes;
-  metrics: Metrics;
   reviews: string[];
+  sentiment: SentimentDistribution; 
+  summary: string;
+  
+  // ADD THIS LINE to make metrics optional
+  metrics?: Metrics; 
 };
 
-type SentimentType = "positive" | "negative" | "mixed";
-type PriorityType = "high" | "medium" | "low";
+
+type PriorityType = string;
 
 // Utility Functions
 const formatIssueName = (name: string = ""): string => {
@@ -90,31 +118,40 @@ const formatIssueName = (name: string = ""): string => {
     .join(" ");
 };
 
-const getSentimentColor = (sentiment: SentimentType): string => {
-  const colorMap = {
+const getSentimentColor = (sentiment: string): string => {
+  const colorMap: { [key: string]: string } = { // Add index signature here
     positive: "bg-green-100 text-green-800 border-green-300",
     negative: "bg-red-100 text-red-800 border-red-300",
     mixed: "bg-yellow-100 text-yellow-800 border-yellow-300",
+    mixed_positive: "bg-yellow-100 text-yellow-800 border-yellow-300",
   };
   return colorMap[sentiment] || "bg-gray-100 text-gray-800 border-gray-300";
 };
 
 const getPriorityColor = (priority: PriorityType): string => {
-  switch (priority) {
-    case "high":
-      return "bg-red-100 text-red-800 border-red-300";
-    case "medium":
-      return "bg-yellow-100 text-yellow-800 border-yellow-300";
-    case "low":
-      return "bg-green-100 text-green-800 border-green-300";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-300";
+  const lowerPriority = priority.toLowerCase();
+  if (lowerPriority.includes("critical") || lowerPriority.includes("high")) {
+      return "bg-red-100 text-red-800 border-red-300";
   }
+  else if (lowerPriority.includes("medium")) {
+      return "bg-yellow-100 text-yellow-800 border-yellow-300";
+  }
+  else if (lowerPriority.includes("low")) {
+      return "bg-green-100 text-green-800 border-green-300";
+  }
+  else {
+    return "bg-gray-100 text-gray-800 border-gray-300";
+  }
+  
 };
 
 // Helper function to calculate sentiment from themes and issues
 const calculateSentimentFromData = (results: AnalysisResult) => {
   // If sentiment_distribution exists in metrics, use it directly
+   if (results.sentiment && (results.sentiment.positive || results.sentiment.negative)) {
+    return results.sentiment;
+  }
+
   if (
     results.metrics?.sentiment_distribution &&
     (results.metrics.sentiment_distribution.positive ||
@@ -234,20 +271,8 @@ const useStatusCycling = () => {
   return { statusUpdates, start, stop, clear };
 };
 
-// Simple FadeTransition component
-const FadeTransition = ({
-  children,
-  animationKey,
-}: {
-  children: React.ReactNode;
-  animationKey: number;
-}) => {
-  return (
-    <div key={animationKey} className="transition-opacity duration-300">
-      {children}
-    </div>
-  );
-};
+
+
 
 // LoadingCarousel component
 const LoadingCarousel = ({ status }: { status: StatusUpdate | null }) => {

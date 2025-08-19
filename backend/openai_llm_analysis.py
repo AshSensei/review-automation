@@ -30,59 +30,34 @@ logger = logging.getLogger(__name__)
 
 def parse_reviews_comprehensive(html_content: str) -> List[Dict[str, Any]]:
     """
-    Comprehensive HTML parsing that combines both approaches.
-    Uses your existing logic plus fallback methods from the original code.
+    Parses HTML content from multiple sources by collecting reviews
+    from a list of known good selectors and deduplicating.
     """
     try:
-        # Check HTML size limit
         if len(html_content) > MAX_HTML_SIZE:
-            logger.warning(
-                f"HTML content too large: {len(html_content)} bytes, truncating to {MAX_HTML_SIZE}"
-            )
             html_content = html_content[:MAX_HTML_SIZE]
 
         soup = BeautifulSoup(html_content, "html.parser")
         reviews = []
 
-        # Your existing selectors (prioritized for your specific use case)
-        primary_selectors = [
-            "li.review-item",
-            ".review-item",
-            ".review",
-            '[data-testid="review"]',
-        ]
-
-        # Additional fallback selectors from original code
-        fallback_selectors = [
-            # Amazon-style reviews
+        container_selectors = [
             '[data-hook="review"]',
-            # Generic review patterns
-            ".review-container",
-            ".user-review",
-            ".customer-review",
-            # Google/Yelp style
-            "[data-review-id]",
-            # Broad fallback
-            "div, article, section",
+            '.review-item',
+            '[data-testid="review"]',
+            '.review',
+            '.customer-review',
         ]
 
-        all_selectors = primary_selectors + fallback_selectors
-
-        review_elements = []
-        successful_selector = None
-
-        for selector in all_selectors:
+        all_review_elements = []
+        for selector in container_selectors:
             elements = soup.select(selector)
             if elements:
-                review_elements = elements[:PARSE_HTML_LIMIT]  # Apply limit
-                successful_selector = selector
-                logger.info(
-                    f"Found {len(elements)} review elements using selector: {selector}"
-                )
-                break
+                all_review_elements.extend(elements)
 
-        if not review_elements:
-            logger.warning("No review elements found with any selector")
+        if all_review_elements:
+            unique_elements = list(dict.fromkeys(all_review_elements))
+            review_elements = unique_elements[:PARSE_HTML_LIMIT]
+        else:
             return []
 
         for i, element in enumerate(review_elements):
@@ -93,138 +68,58 @@ def parse_reviews_comprehensive(html_content: str) -> List[Dict[str, Any]]:
                     "review_id": f"review_{i}",
                 }
 
-                # Extract review text using multiple strategies
-                review_text = ""
+                text_element = element.select_one('[data-hook="review-body"] span')
+                if not text_element:
+                    text_element = element.select_one('.review-text, .review-content p, .ugc-review-body')
 
-                # Your existing text extraction logic
-                text_selectors = ["p.pre-white-space", ".review-text", "p", ".content"]
-                for selector in text_selectors:
-                    text_element = element.select_one(selector)
-                    if text_element:
-                        review_text = text_element.get_text(strip=True)
-                        break
+                review_text = text_element.get_text(strip=True) if text_element else ""
 
-                # Fallback text extraction from original code
                 if not review_text:
-                    # Try Amazon-style selectors
-                    amazon_text = element.select('[data-hook="review-body"] span')
-                    if amazon_text:
-                        review_text = " ".join(
-                            [elem.get_text(strip=True) for elem in amazon_text]
-                        )
-                    else:
-                        # Generic fallback
-                        review_text = element.get_text(strip=True)
+                    review_text = element.get_text(strip=True)
 
-                # Skip if no meaningful text
-                if not review_text or len(review_text) < 10:
-                    continue
+                review_data["review_text"] = review_text[:1000]
 
-                review_data["review_text"] = review_text[:1000]  # Limit length
-
-                # Extract rating using multiple strategies
                 rating = None
-
-                # Your existing rating extraction
-                rating_element = element.select_one("p.visually-hidden")
+                rating_element = element.select_one('i[data-hook="review-star-rating"] span.a-icon-alt')
                 if rating_element:
-                    rating_match = re.search(
-                        r"Rated (\d(?:\.\d)?)", rating_element.text
-                    )
+                    rating_text = rating_element.get_text(strip=True)
+                    rating_match = re.search(r"(\d+(\.\d)?)", rating_text)
                     if rating_match:
                         rating = float(rating_match.group(1))
 
-                # Fallback rating extraction from original code
                 if rating is None:
-                    rating_selectors = [
-                        '[data-hook="review-star-rating"]',
-                        ".rating",
-                        ".stars",
-                        ".review-rating",
+                    generic_rating_selectors = [
                         '[aria-label*="star"]',
+                        '.review-rating',
+                        '.rating',
                     ]
-
-                    for rating_selector in rating_selectors:
-                        rating_elements = element.select(rating_selector)
-                        for rating_elem in rating_elements:
-                            rating_text = rating_elem.get_text(strip=True)
-
-                            # Look for numeric ratings
-                            rating_match = re.search(
-                                r"(\d+(?:\.\d+)?)\s*(?:out of|\/|\s)\s*(\d+)",
-                                rating_text,
-                            )
+                    for selector in generic_rating_selectors:
+                        generic_rating_element = element.select_one(selector)
+                        if generic_rating_element:
+                            rating_text = generic_rating_element.get_text(strip=True)
+                            rating_match = re.search(r"(\d+(\.\d)?)", rating_text)
                             if rating_match:
                                 rating = float(rating_match.group(1))
                                 break
-
-                            # Look for star counts
-                            star_match = re.search(
-                                r"(\d+(?:\.\d+)?)\s*star", rating_text.lower()
-                            )
-                            if star_match:
-                                rating = float(star_match.group(1))
+                            
+                            aria_label = generic_rating_element.get("aria-label", "")
+                            aria_match = re.search(r"(\d+(\.\d)?)", aria_label)
+                            if aria_match:
+                                rating = float(aria_match.group(1))
                                 break
-
-                            # Check aria-label
-                            aria_label = rating_elem.get("aria-label", "")
-                            if aria_label:
-                                aria_rating = re.search(
-                                    r"(\d+(?:\.\d+)?)\s*(?:out of|star)",
-                                    aria_label.lower(),
-                                )
-                                if aria_rating:
-                                    rating = float(aria_rating.group(1))
-                                    break
-
-                        if rating is not None:
-                            break
-
+                
                 review_data["review_rating"] = rating
-                review_data["source_element"] = successful_selector
-
                 reviews.append(review_data)
 
             except Exception as e:
-                logger.debug(f"Failed to parse individual review {i}: {e}")
+                # logger.debug(f"Failed to parse individual review {i}: {e}")
                 continue
-
-        # If no structured reviews found, try text block extraction
-        if not reviews:
-            logger.info("No structured reviews found, attempting text block extraction")
-            text_blocks = soup.find_all(text=True)
-            potential_reviews = []
-
-            for text in text_blocks:
-                text = text.strip()
-                if (
-                    len(text) > 50
-                    and len(text) < 2000
-                    and not text.startswith("<")
-                    and "script" not in text.lower()
-                    and "style" not in text.lower()
-                ):
-                    potential_reviews.append(text)
-
-            # Take the longest text blocks as potential reviews
-            potential_reviews.sort(key=len, reverse=True)
-            for i, text in enumerate(potential_reviews[:PARSE_HTML_LIMIT]):
-                reviews.append(
-                    {
-                        "review_text": text,
-                        "review_rating": None,
-                        "review_id": f"text_block_{i}",
-                        "source_element": "text_extraction",
-                    }
-                )
-
-        logger.info(f"Successfully parsed {len(reviews)} reviews from HTML")
-        return reviews[:PARSE_HTML_LIMIT]
+        
+        return reviews
 
     except Exception as e:
-        logger.error(f"Failed to parse HTML: {e}")
+        # logger.error(f"Failed to parse HTML: {e}")
         return []
-
 
 class OpenAIReviewAnalyzer:
     def __init__(self, openai_api_key: str):
@@ -267,89 +162,64 @@ class OpenAIReviewAnalyzer:
 
     def batch_sentiment_analysis(self, reviews: List[Dict]) -> List[Dict]:
         """
-        Performs sentiment analysis on a batch of reviews using the GPT-5 Responses API.
+        Performs sentiment analysis based solely on star ratings.
+        No API calls needed - this is now a simple rating-to-sentiment mapping.
         """
-        logger.info("📊 Running batch sentiment analysis with GPT-5 Nano...")
+        logger.info("📊 Running rating-based sentiment analysis...")
         sentiments = []
-        valid_reviews = [
-            (i, r) for i, r in enumerate(reviews) if r.get("review_text", "").strip()
-        ]
-        if not valid_reviews:
-            return []
-
-        prompt_reviews = "\n".join(
-            [
-                f'{{"index": {i}, "text": {json.dumps(r["review_text"][:1000])}}}'
-                for i, r in valid_reviews
-            ]
-        )
-        prompt = f"""Analyze sentiment for each JSON object. Respond with a JSON object: {{"sentiments": [{{"index": 0, "sentiment": "positive"}}]}}.\nReviews:\n{prompt_reviews}"""
-
-        try:
-            response = self.openai_client.responses.create(
-                model="gpt-5-nano", input=prompt, reasoning={"effort": "minimal"}
+        
+        for i, review in enumerate(reviews):
+            rating = review.get("review_rating")
+            
+            # Map star rating to sentiment
+            if rating is None:
+                # If no rating available, default to neutral
+                sentiment = "neutral"
+                confidence = 0.3
+            elif rating >= 4:
+                sentiment = "positive"
+                confidence = 0.9
+            elif rating <= 2:
+                sentiment = "negative" 
+                confidence = 0.9
+            else:  # rating == 3
+                sentiment = "neutral"
+                confidence = 0.8
+                
+            sentiments.append(
+                {
+                    "review_index": i,
+                    "sentiment": sentiment,
+                    "confidence": confidence,
+                    "review_rating": rating,
+                }
             )
-            self._track_usage(response.usage, "gpt-5-nano")
-
-            # Use the robust helper function to find the final message and parse the JSON
-            result_data = self._parse_json_from_response(response)
-
-            if not result_data:
-                # If parsing fails inside the helper, it returns None. Trigger the fallback.
-                raise ValueError("Failed to parse valid JSON from the response.")
-
-            sentiment_map = {
-                item["index"]: item["sentiment"].lower()
-                for item in result_data.get("sentiments", [])
-            }
-            for i, review in enumerate(reviews):
-                sentiments.append(
-                    {
-                        "review_index": i,
-                        "sentiment": sentiment_map.get(i, "neutral"),
-                        "confidence": 0.98,
-                        "review_rating": review.get("review_rating"),
-                    }
-                )
-
-        except Exception as e:
-            logger.error(
-                f"Sentiment analysis failed: {e}. Falling back to rating-based sentiment."
-            )
-            # Fallback logic if API fails or parsing is unsuccessful
-            for i, review in enumerate(reviews):
-                rating = review.get("review_rating")
-                sentiment, conf = (
-                    ("positive", 0.7)
-                    if rating and rating >= 4
-                    else (
-                        ("negative", 0.7)
-                        if rating and rating <= 2
-                        else ("neutral", 0.5)
-                    )
-                )
-                sentiments.append(
-                    {
-                        "review_index": i,
-                        "sentiment": sentiment,
-                        "confidence": conf,
-                        "review_rating": rating,
-                    }
-                )
+        
+        logger.info(f"Completed sentiment analysis for {len(sentiments)} reviews")
         return sentiments
 
     def extract_issues_with_llm(
-        self, reviews: List[Dict], product_type: str, return_full_response: bool = False
+        self, reviews: List[Dict], product_type: str, metrics: Dict, return_full_response: bool = False
     ) -> Any:
         logger.info("🤖 Extracting issues with GPT-5...")
         negative_reviews = [r for r in reviews if r.get("review_rating", 3) <= 2]
         if not negative_reviews:
             negative_reviews = reviews
 
+        # Include metrics in the prompt for better context
+        metrics_context = f"""
+Product Metrics:
+- Total Reviews: {metrics.get('total_reviews', 0)}
+- Average Rating: {metrics.get('average_rating', 0):.1f}/5
+- Sentiment Distribution: {metrics.get('sentiment_distribution', {})}
+"""
+
         # A more defensive prompt to ensure valid JSON
         prompt = f"""
 <instructions>
 You are an API that only returns valid JSON. Your task is to analyze product reviews and extract key issues.
+
+{metrics_context}
 
 Follow this two-step process:
 1.  **Analysis Step:** First, think through all the reviews provided. Identify up to 5 distinct user issues. For each issue, internally note its name, a one-sentence description, its severity ('high', 'medium', or 'low'), the number of reviews that mention it ('frequency'), and find the best single 'example_quote'.
@@ -371,7 +241,7 @@ Example of the required JSON output format:
 
 Reviews:
 """ + "\n".join(
-            f"Review: {r['review_text']}" for r in negative_reviews
+            f"Review (Rating: {r.get('review_rating', 'N/A')}): {r['review_text']}" for r in negative_reviews
         )
 
         try:
@@ -452,14 +322,27 @@ Reviews:
         self,
         reviews: List[Dict],
         product_type: str,
+        metrics: Dict,
         previous_response_id: str = None,
         return_full_response: bool = False,
     ) -> Any:
         """Analyzes themes using the GPT-5 Responses API and context chaining."""
         logger.info("🎯 Analyzing themes with GPT-5 Mini...")
 
+        # Include metrics context
+        metrics_context = f"""
+Product Metrics:
+- Total Reviews: {metrics.get('total_reviews', 0)}
+- Average Rating: {metrics.get('average_rating', 0):.1f}/5
+- Sentiment Distribution: {metrics.get('sentiment_distribution', {})}
+- Product Type: {product_type}
+"""
+
         # A cleaner format for the input reviews
-        review_lines = "\n".join([f"Review: {r['review_text']}" for r in reviews])
+        review_lines = "\n".join([
+            f"Review (Rating: {r.get('review_rating', 'N/A')}): {r['review_text']}" 
+            for r in reviews
+        ])
 
         prompt = f"""
 <instructions>
@@ -467,6 +350,8 @@ You are a product analyst. Follow this process:
 1.  Read all reviews and identify 5-8 major themes.
 2.  For each theme, create a list of specific positive points, a separate list of negative points, a 'confidence' score, the overall 'sentiment', and select one representative 'example_quote'.
 3.  Format the result as a single JSON object. The keys of this object MUST be the theme names (e.g., "Durability"). The value for each key MUST be another object containing the analysis.
+
+{metrics_context}
 
 Your entire response must be a single JSON object. DO NOT nest it inside another key.
 </instructions>
@@ -508,7 +393,7 @@ Reviews to Analyze:
             themes_data = json.loads(raw_output)
 
             # The prompt asks for a root key "themes", so we extract that.
-            return themes_data.get("themes", {})
+            return themes_data.get("themes", themes_data)
 
         except Exception as e:
             logger.error(f"Theme analysis failed: {e}")
@@ -536,10 +421,10 @@ Reviews to Analyze:
     <instructions>
     You are a senior product strategist. Based on the following analysis data, please do the following:
 
-    Step 1: Identify key patterns, challenges, or opportunities from the data, paying close attention to the specific `positives` and `negatives` listed within each theme.
+    Step 1: Identify key patterns, challenges, or opportunities from the data, paying close attention to the specific `positives` and `negatives` listed within each theme, as well as the overall metrics and rating distribution.
     Step 2: Write a clear and concise 2–3 sentence executive summary. Crucially, use the specific details from your analysis instead of generic terms (e.g., mention 'thumbstick grinding' instead of 'durability concerns').
     Step 3: Generate 3 to 5 actionable product or business recommendations that directly address the specific `negatives` you found. For each recommendation, provide the recommendation, priority, impact, and rationale.
-    Step 4: Summarize 3 to 6 additional key insights or observations based on the specific `positives` and `negatives`.
+    Step 4: Summarize 3 to 6 additional key insights or observations based on the specific `positives` and `negatives` and the sentiment/rating distribution.
 
     Return the result using this JSON format ONLY:
     {
@@ -611,18 +496,34 @@ Reviews to Analyze:
     def calculate_enhanced_metrics(self, reviews: List[Dict], sentiments: List[Dict]) -> Dict[str, Any]:
         """Calculates aggregate metrics from the parsed review and sentiment data."""
         ratings = [r.get('review_rating') for r in reviews if r.get('review_rating') is not None]
+        review_texts = [r.get('review_text', '') for r in reviews]
         
         if not reviews:
             return {
                 'total_reviews': 0,
                 'average_rating': 0,
                 'sentiment_distribution': {},
+                'rating_distribution': {},
+                'average_review_length': 0,
+                'analysis_quality': 'low',
             }
+
+        # Calculate rating distribution
+        rating_distribution = Counter(ratings) if ratings else {}
+        
+        # Calculate average review length
+        avg_length = sum(len(text) for text in review_texts) / len(review_texts) if review_texts else 0
+        
+        # Determine analysis quality based on available data
+        quality = 'high' if len(ratings) > len(reviews) * 0.8 else 'medium' if len(ratings) > len(reviews) * 0.5 else 'low'
 
         return {
             'total_reviews': len(reviews),
             'average_rating': round(sum(ratings) / len(ratings), 2) if ratings else 0,
             'sentiment_distribution': dict(Counter(s['sentiment'] for s in sentiments)),
+            'rating_distribution': dict(rating_distribution),
+            'average_review_length': round(avg_length, 0),
+            'analysis_quality': quality,
         }
 
     def fallback_issue_extraction(self, reviews: List[Dict]) -> List[Dict]:
@@ -709,11 +610,7 @@ Reviews to Analyze:
                 "example_quote": f'Analysis of {theme.replace("_", " ")}',
             }
 
-        return {
-            "themes": theme_analysis,
-            "discovered_themes": themes,
-            "sample_size": len(reviews),
-        }
+        return theme_analysis
 
     def generate_comprehensive_analysis(
         self, reviews: List[Dict], product_type: str = "product"
@@ -721,10 +618,15 @@ Reviews to Analyze:
         logger.info(f"🚀 Starting GPT-5 chained analysis for {len(reviews)} reviews...")
         start_time = time.time()
 
+        # Step 1: Rating-based sentiment analysis (no API call)
         sentiments = self.batch_sentiment_analysis(reviews)
 
+        # Step 2: Calculate metrics early so they can be used in subsequent prompts
+        metrics = self.calculate_enhanced_metrics(reviews, sentiments)
+
+        # Step 3: Extract issues with metrics context
         issue_response = self.extract_issues_with_llm(
-            reviews, product_type, return_full_response=True
+            reviews, product_type, metrics, return_full_response=True
         )
         issues = (
             self._parse_json_from_response(issue_response) if issue_response else []
@@ -732,9 +634,11 @@ Reviews to Analyze:
 
         previous_id = issue_response.id if issue_response else None
 
+        # Step 4: Analyze themes with metrics context
         theme_response = self.analyze_themes_with_llm(
             reviews,
             product_type,
+            metrics,
             previous_response_id=previous_id,
             return_full_response=True,
         )
@@ -744,7 +648,7 @@ Reviews to Analyze:
 
         previous_id = theme_response.id if theme_response else None
 
-        metrics = self.calculate_enhanced_metrics(reviews, sentiments)
+        # Step 5: Generate insights with full context
         insights = self.generate_insights_with_llm(
             themes, issues, metrics, product_type, previous_response_id=previous_id
         )
@@ -812,6 +716,14 @@ Reviews to Analyze:
         lines.append(f"Analysis Quality: {metrics['analysis_quality'].title()}")
         lines.append("")
 
+        # Rating Distribution
+        lines.append("Rating Distribution:")
+        for rating in sorted(metrics["rating_distribution"].keys(), reverse=True):
+            count = metrics["rating_distribution"][rating]
+            percentage = (count / metrics['total_reviews'] * 100) if metrics['total_reviews'] > 0 else 0
+            lines.append(f"  {rating} stars: {count} ({percentage:.1f}%)")
+        lines.append("")
+
         # Sentiment Distribution
         lines.append("Sentiment Distribution:")
         total_sentiment = sum(metrics["sentiment_distribution"].values())
@@ -841,17 +753,18 @@ Reviews to Analyze:
         lines.append("THEME ANALYSIS")
         lines.append("-" * 40)
 
-        if themes.get("themes"):
-            for theme_name, theme_data in themes["themes"].items():
+        if themes:
+            for theme_name, theme_data in themes.items():
                 lines.append(f"{theme_name.replace('_', ' ').title()}")
-                lines.append(f"   Mentions: {theme_data['mentions']}")
-                lines.append(f"   Sentiment: {theme_data['sentiment'].title()}")
-                lines.append(f"   Confidence: {theme_data['confidence']:.2f}")
+                lines.append(f"   Mentions: {theme_data.get('mentions', 'N/A')}")
+                lines.append(f"   Sentiment: {theme_data.get('sentiment', 'N/A').title()}")
+                lines.append(f"   Confidence: {theme_data.get('confidence', 0):.2f}")
 
-                if theme_data.get("key_phrases"):
-                    lines.append(
-                        f"   Key Phrases: {', '.join(theme_data['key_phrases'])}"
-                    )
+                if theme_data.get("positives"):
+                    lines.append(f"   Positives: {', '.join(theme_data['positives'])}")
+                
+                if theme_data.get("negatives"):
+                    lines.append(f"   Negatives: {', '.join(theme_data['negatives'])}")
 
                 if theme_data.get("example_quote"):
                     lines.append(f"   Example: \"{theme_data['example_quote']}\"")
