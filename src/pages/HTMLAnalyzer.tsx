@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
 import {
   Accordion,
   AccordionContent,
@@ -810,6 +811,7 @@ function HTMLAnalyzer() {
     // This line runs when the component mounts
     document.title = 'HTML Analyzer';
   }, []);
+  const navigate = useNavigate();
   const handleCopyReport = async () => {
     if (!results) return;
 
@@ -909,8 +911,19 @@ function HTMLAnalyzer() {
 
   return (
     <main className="p-8 max-w-4xl mx-auto">
-      <header className="mb-6">
+      <header className="mb-6 flex items-center justify-between">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back
+        </Button>
         <h1 className="text-4xl font-bold">HTML Analyzer</h1>
+        <div className="w-[72px]"></div> {/* Spacer for centering */}
       </header>
 
       <section aria-label="HTML Input">

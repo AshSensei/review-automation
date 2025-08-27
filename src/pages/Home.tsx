@@ -40,6 +40,15 @@ function Home() {
               <a>Competitor Analyzer</a>
             </NavigationMenuLink>
           </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              asChild
+              onClick={() => navigate("/feature-analyzer")}
+              className="cursor-pointer"
+            >
+              <a>Feature Analyzer</a>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
 

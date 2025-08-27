@@ -464,35 +464,6 @@ Reviews to Analyze:
                 "key_insights": [],
             }
 
-    def get_representative_sample(
-        self, reviews: List[Dict], target_count: int
-    ) -> List[Dict]:
-        """Get diverse representative sample of reviews."""
-
-        if len(reviews) <= target_count:
-            return reviews
-
-        # Categorize reviews
-        high_rated = [r for r in reviews if r.get("review_rating", 3) >= 4]
-        low_rated = [r for r in reviews if r.get("review_rating", 3) <= 2]
-        mid_rated = [r for r in reviews if r.get("review_rating", 3) == 3]
-
-        # Distribute sample across rating categories
-        sample = []
-
-        # Get mix of ratings
-        sample.extend(high_rated[: target_count // 3])
-        sample.extend(low_rated[: target_count // 3])
-        sample.extend(mid_rated[: target_count // 3])
-
-        # Fill remaining with any reviews
-        remaining = target_count - len(sample)
-        if remaining > 0:
-            other_reviews = [r for r in reviews if r not in sample]
-            sample.extend(other_reviews[:remaining])
-
-        return sample
-
     def calculate_enhanced_metrics(self, reviews: List[Dict], sentiments: List[Dict]) -> Dict[str, Any]:
         """Calculates aggregate metrics from the parsed review and sentiment data."""
         ratings = [r.get('review_rating') for r in reviews if r.get('review_rating') is not None]

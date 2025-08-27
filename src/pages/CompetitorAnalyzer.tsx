@@ -5,22 +5,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Lightbulb, Trophy, Shield, Star } from "lucide-react";
-import { LoadingCarousel } from "../components/ui/LoadingCarousel"; // Assuming this component exists
+
+import { Lightbulb, Trophy, Shield, Star, AlertTriangle } from "lucide-react";
+import { FadeTransition } from "@/components/ui/FadeTransition";
+import { mockApiResponse } from "../data/mockdata";
 
 // --- TYPESCRIPT INTERFACES ---
-// Matches the JSON structure from the Python backend
+// Fixed to match the actual backend JSON structure
 
 interface Issue {
   issue_name: string;
@@ -28,14 +26,15 @@ interface Issue {
   frequency: number;
   severity: string;
   example_quote: string;
-  type: string;
+  type?: string;
 }
 
 interface Theme {
-  mentions: number;
-  sentiment: "positive" | "negative" | "neutral";
-  example_quote: string;
-  key_phrases?: string[];
+  confidence: number;
+  overall_sentiment: "positive" | "negative" | "mixed";
+  positive_points: string[]; // FIX: Renamed from 'positives'
+  negative_points: string[]; // FIX: Renamed from 'negatives'
+  representative_quote: string; // FIX: Renamed from 'example_quote'
 }
 
 interface Metrics {
@@ -43,35 +42,42 @@ interface Metrics {
   average_rating: number;
   rating_distribution: Record<string, number>;
   sentiment_distribution: Record<string, number>;
+  average_review_length: number;
+  analysis_quality: string;
+}
+
+interface Recommendation {
+  recommendation: string;
+  priority: string; // FIX: Changed from union type to 'string' to allow for "High", "Medium-High", etc.
+  impact: string;
+  rationale?: string;
+}
+
+interface Insights {
+  executive_summary: string;
+  recommendations: Recommendation[];
+  key_insights: string[];
 }
 
 interface ProductAnalysis {
-  product_type: string;
-  themes: {
-    themes: Record<string, Theme>;
-    discovered_themes: string[];
-    sample_size: number;
-  };
+  themes: Record<string, Theme>;
   issues: Issue[];
   metrics: Metrics;
+  insights: Insights;
   analysis_metadata: {
+    total_reviews: number;
     analysis_date: string;
+    product_type: string;
     model_used: string;
     analysis_time_seconds: number;
+    token_usage?: Record<string, number>;
   };
-  reviews?: { review_text: string; review_rating: number | null }[];
-}
-
-interface StrategicRecommendation {
-  recommendation: string;
-  priority: "High" | "Medium" | "Low";
-  impact: string;
 }
 
 interface StrategicInsights {
   competitive_advantages: string[];
   areas_to_improve: string[];
-  recommendations: StrategicRecommendation[];
+  recommendations: Recommendation[];
 }
 
 interface ComparisonData {
@@ -86,22 +92,152 @@ interface ComparisonData {
   strategic_insights: StrategicInsights;
 }
 
-interface FullApiResponse {
-  product_a: ProductAnalysis;
-  product_b: ProductAnalysis;
-  comparison: ComparisonData;
+export interface FullApiResponse {
+  product_a?: ProductAnalysis;
+  product_b?: ProductAnalysis;
+  comparison?: ComparisonData;
 }
 
 interface StatusUpdate {
   message: string;
   timestamp: number;
 }
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/";
+// Theme reconciliation helper - maps similar themes to common names
+const reconcileThemes = (
+  productAThemes: string[],
+  productBThemes: string[]
+) => {
+  const themeMapping: Record<string, string[]> = {
+    Performance: [
+      "Performance and Input Response",
+      "Performance and Responsiveness",
+      "Performance",
+      "Input Response",
+      "Responsiveness",
+    ],
+    "Battery Life": [
+      "Battery Life and Charging Dock",
+      "Battery and Power Management",
+      "Battery Life",
+      "Battery",
+      "Power Management",
+      "Charging",
+    ],
+    "Build Quality": [
+      "Build Quality and QA",
+      "Build Quality, Accessories, and Price",
+      "Build Quality",
+      "Quality",
+      "Construction",
+    ],
+    Connectivity: [
+      "Connectivity and Software/App",
+      "Connectivity and Compatibility",
+      "Connectivity",
+      "Connection",
+      "Wireless",
+      "Pairing",
+    ],
+    Thumbsticks: [
+      "Thumbsticks and Anti-Friction Rings",
+      "Thumbsticks (Hall Effect), Deadzone, and Calibration",
+      "Thumbsticks",
+      "Sticks",
+      "Joysticks",
+      "Hall Effect",
+    ],
+    Ergonomics: [
+      "Ergonomics and Button Layout",
+      "Ergonomics and Comfort",
+      "Ergonomics",
+      "Comfort",
+      "Feel",
+    ],
+    Customization: [
+      "Customization and On-Device Screen",
+      "Customization and Software",
+      "Customization",
+      "Software",
+      "Profiles",
+    ],
+    "Back Buttons": [
+      "Back Buttons and Controls",
+      "Back Buttons",
+      "Paddles",
+      "Controls",
+    ],
+  };
 
-// --- UTILITY & HELPER FUNCTIONS ---
+  const sharedThemes: {
+    canonical: string;
+    productA: string;
+    productB: string;
+  }[] = [];
+  const uniqueToA: string[] = [];
+  const uniqueToB: string[] = [];
+
+  const findCanonicalTheme = (themeName: string): string | null => {
+    for (const [canonical, variants] of Object.entries(themeMapping)) {
+      if (
+        variants.some(
+          (variant) =>
+            themeName.toLowerCase().includes(variant.toLowerCase()) ||
+            variant.toLowerCase().includes(themeName.toLowerCase())
+        )
+      ) {
+        return canonical;
+      }
+    }
+    return null;
+  };
+
+  const processedA = new Set<string>();
+  const processedB = new Set<string>();
+
+  // Find shared themes
+  for (const themeA of productAThemes) {
+    if (processedA.has(themeA)) continue;
+
+    const canonicalA = findCanonicalTheme(themeA);
+    if (!canonicalA) continue;
+
+    for (const themeB of productBThemes) {
+      if (processedB.has(themeB)) continue;
+
+      const canonicalB = findCanonicalTheme(themeB);
+      if (canonicalA === canonicalB) {
+        sharedThemes.push({
+          canonical: canonicalA,
+          productA: themeA,
+          productB: themeB,
+        });
+        processedA.add(themeA);
+        processedB.add(themeB);
+        break;
+      }
+    }
+  }
+
+  // Add remaining themes as unique
+  for (const themeA of productAThemes) {
+    if (!processedA.has(themeA)) {
+      uniqueToA.push(themeA);
+    }
+  }
+
+  for (const themeB of productBThemes) {
+    if (!processedB.has(themeB)) {
+      uniqueToB.push(themeB);
+    }
+  }
+
+  return { sharedThemes, uniqueToA, uniqueToB };
+};
 
 const formatThemeName = (name: string = ""): string => {
   return name
-    .split("_")
+    .split(/[_\s]+/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 };
@@ -134,26 +270,6 @@ const getSentimentClass = (
       bg: "bg-gray-50",
       border: "border-gray-300",
     },
-    average: {
-      text: "text-yellow-700",
-      bg: "bg-yellow-50",
-      border: "border-yellow-300",
-    },
-    good: {
-      text: "text-blue-700",
-      bg: "bg-blue-50",
-      border: "border-blue-300",
-    },
-    excellent: {
-      text: "text-purple-700",
-      bg: "bg-purple-50",
-      border: "border-purple-300",
-    },
-    poor: {
-      text: "text-orange-700",
-      bg: "bg-orange-50",
-      border: "border-orange-300",
-    },
   };
   return styles[sentimentLower]?.[element] || styles.neutral[element];
 };
@@ -161,13 +277,13 @@ const getSentimentClass = (
 const getPriorityClass = (priority: string = "low") => {
   switch (priority.toLowerCase()) {
     case "high":
-      return "bg-red-100 text-red-800";
+      return "bg-red-100 text-red-800 border-red-200";
     case "medium":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
     case "low":
-      return "bg-green-100 text-green-800";
+      return "bg-green-100 text-green-800 border-green-200";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-100 text-gray-800 border-gray-200";
   }
 };
 
@@ -214,113 +330,285 @@ const useStatusCycling = () => {
   return { statusUpdates, start, stop, clear };
 };
 
+// Removed LoadingCarousel - using original implementation
+
 // --- UI COMPONENTS ---
 
-const KeyPhrasePopover = ({
-  phrase,
-  reviews,
+const ReconciledComparisonTable = ({
+  productAThemes,
+  productBThemes,
+  productAName,
+  productBName,
 }: {
-  phrase: string;
-  reviews: ProductAnalysis["reviews"];
+  productAThemes: Record<string, Theme>;
+  productBThemes: Record<string, Theme>;
+  productAName: string;
+  productBName: string;
 }) => {
-  const relatedReviews = reviews
-    ? reviews.filter((review) =>
-        review.review_text.toLowerCase().includes(phrase.toLowerCase())
-      )
-    : [];
+  const themeNamesA = Object.keys(productAThemes);
+  const themeNamesB = Object.keys(productBThemes);
+
+  const { sharedThemes, uniqueToA, uniqueToB } = reconcileThemes(
+    themeNamesA,
+    themeNamesB
+  );
+
+  // Corrected Code (Safe)
+  const getSentimentIcon = (sentiment: string) => {
+    // Use "neutral" as a fallback if sentiment is missing
+    switch ((sentiment || "neutral").toLowerCase()) {
+      case "positive":
+        return "✅";
+      case "negative":
+        return "❌";
+      case "neutral":
+        return "➖";
+      default:
+        return "❓";
+    }
+  };
+
+  const getWinner = (sentimentA: string, sentimentB: string) => {
+    const scoreMap = { positive: 3, neutral: 2, mixed: 1, negative: 0 };
+
+    const safeSentimentA = (sentimentA || "neutral").toLowerCase();
+    const safeSentimentB = (sentimentB || "neutral").toLowerCase();
+
+    // The fallback "|| 2" now defaults to the neutral score.
+    const scoreA = scoreMap[safeSentimentA as keyof typeof scoreMap] || 2;
+    const scoreB = scoreMap[safeSentimentB as keyof typeof scoreMap] || 2;
+
+    if (scoreA > scoreB) return productAName;
+    if (scoreB > scoreA) return productBName;
+    return "Tie";
+  };
+
+  if (sharedThemes.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+          No Directly Comparable Themes
+        </h3>
+        <p className="text-gray-500 mb-4">
+          While both products have themes around similar topics, they focus on
+          different aspects.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div className="bg-blue-50 rounded-lg p-4">
+            <h4 className="font-semibold text-blue-800 mb-2">
+              {productAName} Focus Areas:
+            </h4>
+            <div className="text-sm text-blue-700 space-y-1">
+              {uniqueToA.slice(0, 4).map((theme, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                  <span>{formatThemeName(theme)}</span>
+                </div>
+              ))}
+              {uniqueToA.length > 4 && (
+                <div className="text-xs text-blue-600 italic">
+                  +{uniqueToA.length - 4} more themes
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="bg-green-50 rounded-lg p-4">
+            <h4 className="font-semibold text-green-800 mb-2">
+              {productBName} Focus Areas:
+            </h4>
+            <div className="text-sm text-green-700 space-y-1">
+              {uniqueToB.slice(0, 4).map((theme, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                  <span>{formatThemeName(theme)}</span>
+                </div>
+              ))}
+              {uniqueToB.length > 4 && (
+                <div className="text-xs text-green-600 italic">
+                  +{uniqueToB.length - 4} more themes
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md text-xs transition-colors cursor-pointer border border-gray-300">
-          {phrase}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-96 overflow-y-auto">
-        <div className="space-y-3">
-          <h4 className="font-semibold text-sm">
-            Reviews mentioning "{phrase}"
-          </h4>
-          {relatedReviews.length > 0 ? (
-            relatedReviews.slice(0, 5).map((review, index) => (
-              <blockquote
-                key={index}
-                className="border-l-4 border-blue-500 pl-3 py-2 bg-blue-50 text-sm text-gray-700 italic rounded-r-md"
-              >
-                "
-                {review.review_text.length > 150
-                  ? review.review_text.substring(0, 150) + "..."
-                  : review.review_text}
-                "
-              </blockquote>
-            ))
-          ) : (
-            <p className="text-sm text-gray-500 italic">No reviews found.</p>
+    <div className="space-y-6">
+      <div className="overflow-x-auto border rounded-lg shadow-sm">
+        <table className="min-w-full border-collapse bg-white">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-sm font-semibold text-gray-900 border-b border-gray-200 text-left">
+                Theme Category
+              </th>
+              <th className="px-4 py-3 text-sm font-semibold text-gray-900 border-b border-gray-200 text-center">
+                {productAName}
+              </th>
+              <th className="px-4 py-3 text-sm font-semibold text-gray-900 border-b border-gray-200 text-center">
+                {productBName}
+              </th>
+              <th className="px-4 py-3 text-sm font-semibold text-gray-900 border-b border-gray-200 text-center">
+                Winner
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sharedThemes.map((shared, index) => {
+              const themeA = productAThemes[shared.productA];
+              const themeB = productBThemes[shared.productB];
+
+              // --- FIX: ADD THIS SAFETY CHECK ---
+              // This prevents a crash if a theme is missing from one of the products.
+              if (!themeA || !themeB) {
+                return null;
+              }
+
+              const winner = getWinner(
+                themeA.overall_sentiment,
+                themeB.overall_sentiment
+              );
+
+              return (
+                <tr
+                  key={index}
+                  className="hover:bg-gray-50 border-b border-gray-200"
+                >
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900 text-left">
+                    {shared.canonical}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center text-gray-800">
+                    <div className="flex items-center justify-center">
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getSentimentClass(
+                          themeA.overall_sentiment,
+                          "bg"
+                        )} ${getSentimentClass(
+                          themeA.overall_sentiment,
+                          "text"
+                        )}`}
+                      >
+                        {getSentimentIcon(themeA.overall_sentiment)}{" "}
+                        {capitalize(themeA.overall_sentiment)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center text-gray-800">
+                    <div className="flex items-center justify-center">
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getSentimentClass(
+                          themeB.overall_sentiment,
+                          "bg"
+                        )} ${getSentimentClass(
+                          themeB.overall_sentiment,
+                          "text"
+                        )}`}
+                      >
+                        {getSentimentIcon(themeB.overall_sentiment)}{" "}
+                        {capitalize(themeB.overall_sentiment)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    <span
+                      className={`font-semibold ${
+                        winner === productAName
+                          ? "text-blue-600"
+                          : winner === productBName
+                          ? "text-green-600"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {winner}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* --- FIX: ADDED INFORMATIVE SENTIMENT BADGES TO UNIQUE THEMES --- */}
+      {(uniqueToA.length > 0 || uniqueToB.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
+          {uniqueToA.length > 0 && (
+            <div className="bg-blue-50/50 rounded-lg p-4 border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-3">
+                {productAName} Unique Themes:
+              </h4>
+              <div className="space-y-2">
+                {uniqueToA.map((themeName, i) => {
+                  const themeDetails = productAThemes[themeName];
+                  if (!themeDetails) return null;
+
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between gap-4"
+                    >
+                      <span className="text-sm text-blue-900">
+                        {formatThemeName(themeName)}
+                      </span>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getSentimentClass(
+                          themeDetails.overall_sentiment,
+                          "bg"
+                        )} ${getSentimentClass(
+                          themeDetails.overall_sentiment,
+                          "text"
+                        )}`}
+                      >
+                        {getSentimentIcon(themeDetails.overall_sentiment)}{" "}
+                        {capitalize(themeDetails.overall_sentiment)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {uniqueToB.length > 0 && (
+            <div className="bg-green-50/50 rounded-lg p-4 border border-green-200">
+              <h4 className="font-semibold text-green-800 mb-3">
+                {productBName} Unique Themes:
+              </h4>
+              <div className="space-y-2">
+                {uniqueToB.map((themeName, i) => {
+                  const themeDetails = productBThemes[themeName];
+                  if (!themeDetails) return null;
+
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between gap-4"
+                    >
+                      <span className="text-sm text-green-900">
+                        {formatThemeName(themeName)}
+                      </span>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getSentimentClass(
+                          themeDetails.overall_sentiment,
+                          "bg"
+                        )} ${getSentimentClass(
+                          themeDetails.overall_sentiment,
+                          "text"
+                        )}`}
+                      >
+                        {getSentimentIcon(themeDetails.overall_sentiment)}{" "}
+                        {capitalize(themeDetails.overall_sentiment)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
-      </PopoverContent>
-    </Popover>
-  );
-};
-
-const RenderMarkdownTable = ({ markdown }: { markdown: string }) => {
-  if (!markdown || typeof markdown !== "string")
-    return <p>No comparison data available.</p>;
-
-  const lines = markdown.trim().split("\n");
-  if (lines.length < 2) return <p>No table data.</p>;
-
-  // Parse header
-  const headerCells = lines[0]
-    .split("|")
-    .map((cell) => cell.trim())
-    .filter((cell) => cell !== "");
-
-  // Parse data rows and normalize cell counts
-  const rows = lines.slice(2).map((line) => {
-    const cells = line
-      .split("|")
-      .map((cell) => cell.trim())
-      .filter((cell) => cell !== "");
-    // Pad or trim rows to match header length
-    if (cells.length < headerCells.length) {
-      return [...cells, ...Array(headerCells.length - cells.length).fill("")];
-    } else if (cells.length > headerCells.length) {
-      return cells.slice(0, headerCells.length);
-    }
-    return cells;
-  });
-
-  return (
-    <div className="overflow-x-auto border rounded-md shadow-sm">
-      <table className="min-w-full table-fixed border-collapse">
-        <thead className="bg-gray-100">
-          <tr>
-            {headerCells.map((cell, index) => (
-              <th
-                key={index}
-                className="px-4 py-2 text-sm font-semibold text-gray-800 border-b text-center"
-              >
-                {cell}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-white">
-          {rows.map((row, rowIndex) => (
-            <tr key={rowIndex} className="hover:bg-gray-50">
-              {row.map((cell, cellIndex) => (
-                <td
-                  key={cellIndex}
-                  className="px-4 py-2 text-sm text-gray-700 border-t text-center break-words"
-                >
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      )}
     </div>
   );
 };
@@ -328,7 +616,7 @@ const RenderMarkdownTable = ({ markdown }: { markdown: string }) => {
 const StrategicInsightsCard = ({
   insights,
 }: {
-  insights: StrategicInsights;
+  insights?: StrategicInsights;
 }) => {
   if (!insights) return null;
 
@@ -340,130 +628,146 @@ const StrategicInsightsCard = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6 space-y-6">
-        <div>
-          <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
-            <Trophy className="text-green-500" /> Competitive Advantages
-          </h3>
-          <ul className="list-disc list-inside space-y-1 text-gray-700 pl-2">
-            {insights.competitive_advantages?.map((adv, i) => (
-              <li key={i}>{adv}</li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
-            <Shield className="text-red-500" /> Areas to Improve
-          </h3>
-          <ul className="list-disc list-inside space-y-1 text-gray-700 pl-2">
-            {insights.areas_to_improve?.map((area, i) => (
-              <li key={i}>{area}</li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-semibold text-lg mb-3">
-            Actionable Recommendations
-          </h3>
-          <div className="space-y-4">
-            {insights.recommendations?.map((rec, i) => (
-              <div key={i} className="border rounded-lg p-4 bg-gray-50/50">
-                <div className="flex justify-between items-start gap-4">
-                  <p className="font-medium text-gray-800 flex-1">
-                    {rec.recommendation}
-                  </p>
-                  <span
-                    className={`text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap ${getPriorityClass(
-                      rec.priority
-                    )}`}
-                  >
-                    {rec.priority}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  <strong>Impact:</strong> {rec.impact}
-                </p>
-              </div>
-            ))}
+        {/* CHANGED: Used ?. and ?? [] to safely map over potentially missing arrays */}
+        {(insights?.competitive_advantages ?? []).length > 0 && (
+          <div>
+            <h3 className="font-semibold text-lg flex items-center gap-2 mb-3">
+              <Trophy className="text-green-500" /> Competitive Advantages
+            </h3>
+            <ul className="space-y-2">
+              {insights.competitive_advantages.map((adv, i) => (
+                <li key={i} className="flex items-start gap-2 text-gray-700">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 shrink-0"></div>
+                  <span>{adv}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
+        )}
+        {(insights?.areas_to_improve ?? []).length > 0 && (
+          <div>
+            <h3 className="font-semibold text-lg flex items-center gap-2 mb-3">
+              <Shield className="text-red-500" /> Areas to Improve
+            </h3>
+            <ul className="space-y-2">
+              {insights.areas_to_improve.map((area, i) => (
+                <li key={i} className="flex items-start gap-2 text-gray-700">
+                  <div className="w-2 h-2 bg-red-500 rounded-full mt-2 shrink-0"></div>
+                  <span>{area}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {(insights?.recommendations ?? []).length > 0 && (
+          <div>
+            <h3 className="font-semibold text-lg mb-3">
+              Actionable Recommendations
+            </h3>
+            <div className="space-y-4">
+              {insights.recommendations.map((rec, i) => (
+                <div key={i} className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex justify-between items-start gap-4 mb-3">
+                    <p className="font-medium text-gray-800 flex-1">
+                      {rec.recommendation}
+                    </p>
+                    <span
+                      className={`text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap border ${getPriorityClass(
+                        rec.priority
+                      )}`}
+                    >
+                      {capitalize(rec.priority)} Priority
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    <strong>Expected Impact:</strong> {rec.impact}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 };
 
-const ProductAnalysisCard = ({ analysis }: { analysis: ProductAnalysis }) => {
-  if (!analysis) return null;
+const ProductAnalysisCard = ({
+  analysis,
+  productName,
+}: {
+  analysis?: ProductAnalysis;
+  productName: string;
+}) => {
+  if (!analysis) return null; // Safe guard
+
+  // CHANGED: Safely access nested properties with ?. and provide fallbacks with ??
+  const positiveCount =
+    analysis?.metrics?.sentiment_distribution?.["positive"] ?? 0;
+  const negativeCount =
+    analysis?.metrics?.sentiment_distribution?.["negative"] ?? 0;
+  const neutralCount =
+    analysis?.metrics?.sentiment_distribution?.["neutral"] ?? 0;
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle>{analysis.product_type}</CardTitle>
-        <p className="text-sm text-gray-500 pt-1">
-          Based on {analysis.metrics.total_reviews} reviews
-        </p>
+        <CardTitle className="flex items-center gap-2">
+          {productName}
+          <span className="text-sm font-normal text-gray-500">
+            ({analysis?.metrics?.total_reviews ?? 0} reviews)
+          </span>
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 flex-grow">
-        {/* Metrics */}
-        <div className="grid grid-cols-2 gap-4 text-center">
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-            <div className="text-3xl font-bold text-blue-600 flex items-center justify-center gap-1">
-              <Star className="w-6 h-6 text-yellow-400 fill-current" />{" "}
-              {analysis.metrics.average_rating.toFixed(2)}
+      <CardContent className="space-y-6 flex-grow">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-center gap-1 text-2xl font-bold text-blue-600 mb-1">
+              <Star className="w-5 h-5 text-yellow-400 fill-current" />
+              {(analysis?.metrics?.average_rating ?? 0).toFixed(1)}
             </div>
-            <div className="text-sm text-blue-800">Avg. Rating</div>
+            <div className="text-sm text-blue-800">Average Rating</div>
           </div>
-          <div className="p-3 bg-green-50 rounded-lg border border-green-100">
-            <div className="text-3xl font-bold text-green-600">
-              {analysis.metrics.sentiment_distribution["POSITIVE"] || 0}
+          <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="text-2xl font-bold text-green-600 mb-1">
+              {positiveCount}
             </div>
             <div className="text-sm text-green-800">Positive Reviews</div>
           </div>
         </div>
 
-        {/* Deep Dive Accordions */}
+        {analysis?.insights?.executive_summary && (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-semibold text-blue-900 mb-2">
+              Executive Summary
+            </h4>
+            <p className="text-sm text-blue-800">
+              {analysis.insights.executive_summary}
+            </p>
+          </div>
+        )}
+
         <Accordion type="multiple" className="w-full">
           <AccordionItem value="themes">
             <AccordionTrigger>
-              Detailed Theme Analysis (
-              {Object.keys(analysis.themes.themes).length})
+              Theme Analysis ({Object.keys(analysis?.themes ?? {}).length}{" "}
+              themes)
             </AccordionTrigger>
-            <AccordionContent className="space-y-3 pt-4">
-              {Object.entries(analysis.themes.themes).map(
+            <AccordionContent className="space-y-4 pt-4">
+              {/* CHANGED: Safely map over themes with ?? {} */}
+              {Object.entries(analysis?.themes ?? {}).map(
                 ([theme, details]) => (
                   <div
                     key={theme}
-                    className={`p-3 border-l-4 rounded-r-md ${getSentimentClass(
-                      details.sentiment,
+                    className={`p-4 border-l-4 rounded-r-lg ${getSentimentClass(
+                      details?.overall_sentiment,
                       "bg"
-                    )} ${getSentimentClass(details.sentiment, "border")}`}
+                    )} ${getSentimentClass(
+                      details?.overall_sentiment,
+                      "border"
+                    )}`}
                   >
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-semibold">
-                        {formatThemeName(theme)}
-                      </h4>
-                      <span
-                        className={`text-xs font-bold px-2 py-1 rounded ${getSentimentClass(
-                          details.sentiment,
-                          "bg"
-                        )} ${getSentimentClass(details.sentiment, "text")}`}
-                      >
-                        {capitalize(details.sentiment)}
-                      </span>
-                    </div>
-                    <blockquote className="text-sm italic text-gray-600 mb-3">
-                      "{details.example_quote}"
-                    </blockquote>
-                    {details.key_phrases && (
-                      <div className="flex flex-wrap gap-2">
-                        {details.key_phrases.map((phrase) => (
-                          <KeyPhrasePopover
-                            key={phrase}
-                            phrase={phrase}
-                            reviews={analysis.reviews || []}
-                          />
-                        ))}
-                      </div>
-                    )}
+                    {/* ... inner theme rendering ... */}
                   </div>
                 )
               )}
@@ -471,35 +775,54 @@ const ProductAnalysisCard = ({ analysis }: { analysis: ProductAnalysis }) => {
           </AccordionItem>
           <AccordionItem value="issues">
             <AccordionTrigger>
-              Common Issues ({analysis.issues.length})
+              Common Issues ({(analysis?.issues ?? []).length} identified)
             </AccordionTrigger>
-            <AccordionContent className="space-y-3 pt-4">
-              {analysis.issues.length > 0 ? (
-                analysis.issues.map((issue) => (
+            <AccordionContent className="space-y-4 pt-4">
+              {/* CHANGED: Safely map over issues with ?? [] */}
+              {(analysis?.issues ?? []).length > 0 ? (
+                analysis.issues.map((issue, index) => (
                   <div
-                    key={issue.issue_name}
-                    className="p-3 border-l-4 rounded-r-md bg-red-50 border-red-300"
+                    key={`${issue.issue_name}-${index}`}
+                    className="p-4 border-l-4 rounded-r-lg bg-red-50 border-red-300"
                   >
-                    <div className="flex justify-between items-center mb-1">
-                      <h4 className="font-semibold text-red-800">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-red-900">
                         {formatThemeName(issue.issue_name)}
                       </h4>
-                      <span className="text-xs font-bold px-2 py-1 bg-red-200 text-red-800 rounded">
-                        {issue.severity}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-xs font-bold px-2 py-1 rounded-full border ${getPriorityClass(
+                            issue.severity
+                          )}`}
+                        >
+                          {capitalize(issue.severity)}
+                        </span>
+                        <span className="text-xs text-gray-600">
+                          {/* CHANGED: Used 'frequency' and provided a fallback */}
+                          {issue.frequency ?? 1}{" "}
+                          {(issue.frequency ?? 1) === 1
+                            ? "mention"
+                            : "mentions"}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-700 mb-2">
+                    <p className="text-sm text-gray-700 mb-3">
                       {issue.description}
                     </p>
-                    <blockquote className="text-sm italic text-gray-600">
-                      "{issue.example_quote}"
-                    </blockquote>
+                    {issue.example_quote && (
+                      <blockquote className="text-sm italic text-red-700 pl-3 border-l-2 border-red-300">
+                        "{issue.example_quote}"
+                      </blockquote>
+                    )}
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 italic px-4">
-                  No significant issues were identified from negative reviews.
-                </p>
+                <div className="text-center py-8">
+                  <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500 italic">
+                    No significant issues identified.
+                  </p>
+                </div>
               )}
             </AccordionContent>
           </AccordionItem>
@@ -521,11 +844,11 @@ export default function CompetitorAnalyzer() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<FullApiResponse | null>(null);
   const [error, setError] = useState("");
-
+  const navigate = useNavigate();
   useEffect(() => {
-      // This line runs when the component mounts
-      document.title = 'Competitor Analyzer';
-    }, []);
+    document.title = "Competitor Analyzer";
+  }, []);
+
   const {
     statusUpdates,
     start: startStatus,
@@ -552,22 +875,37 @@ export default function CompetitorAnalyzer() {
     startStatus();
 
     try {
-      const response = await fetch("http://localhost:5001/api/compare", {
+      console.log("Sending request with data:", inputs); // Debug log
+
+      const response = await fetch(`${API_BASE}api/compare`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify(inputs),
       });
 
+      console.log("Response status:", response.status); // Debug log
+      console.log("Response headers:", response.headers); // Debug log
+
       if (!response.ok) {
-        const errData = await response.json();
+        const errData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
         throw new Error(
           errData.error || `HTTP error! status: ${response.status}`
         );
       }
 
       const data: FullApiResponse = await response.json();
+      console.log("Received raw data:", data); // Debug log
+      console.log("Product A themes:", data?.product_a?.themes); // Debug log
+      console.log("Product B themes:", data?.product_b?.themes); // Debug log
+
       setResults(data);
     } catch (err) {
+      console.error("Full error details:", err); // Debug log
       setError(
         `Analysis failed: ${err instanceof Error ? err.message : String(err)}`
       );
@@ -592,12 +930,33 @@ export default function CompetitorAnalyzer() {
   return (
     <main className="p-4 md:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
+        <header className="mb-6 flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Back
+          </Button>
+          <h1 className="text-4xl font-bold">Competitor Review Analyzer</h1>
+          <div className="w-[72px]"></div> {/* Spacer for centering */}
+        </header>
         <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-800">
-            Competitor Review Analyzer
-          </h1>
-          <p className="text-lg text-gray-600 mt-2">
-            Compare two products side-by-side using raw review HTML.
+          <p className="text-lg text-gray-600">
+            Compare two products side-by-side using HTML from review pages.
           </p>
         </header>
 
@@ -608,95 +967,147 @@ export default function CompetitorAnalyzer() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <Label htmlFor="product_name_a" className="font-semibold">
-                  Your Product (A)
-                </Label>
-                <Input
-                  id="product_name_a"
-                  name="product_name_a"
-                  value={inputs.product_name_a}
-                  onChange={handleInputChange}
-                />
-                <Label htmlFor="html_a">Product A HTML</Label>
-                <Textarea
-                  id="html_a"
-                  name="html_a"
-                  value={inputs.html_a}
-                  onChange={handleInputChange}
-                  placeholder="Paste HTML for Your Product..."
-                  className="h-48 font-mono text-xs"
-                />
+                <div>
+                  <Label htmlFor="product_name_a" className="font-semibold">
+                    Your Product (A)
+                  </Label>
+                  <Input
+                    id="product_name_a"
+                    name="product_name_a"
+                    value={inputs.product_name_a}
+                    onChange={handleInputChange}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="html_a">Product A HTML</Label>
+                  <Textarea
+                    id="html_a"
+                    name="html_a"
+                    value={inputs.html_a}
+                    onChange={handleInputChange}
+                    placeholder="Paste HTML for Your Product..."
+                    className="h-48 font-mono text-xs mt-1"
+                  />
+                </div>
               </div>
+
               <div className="space-y-4">
-                <Label htmlFor="product_name_b" className="font-semibold">
-                  Competitor's Product (B)
-                </Label>
-                <Input
-                  id="product_name_b"
-                  name="product_name_b"
-                  value={inputs.product_name_b}
-                  onChange={handleInputChange}
-                />
-                <Label htmlFor="html_b">Product B HTML</Label>
-                <Textarea
-                  id="html_b"
-                  name="html_b"
-                  value={inputs.html_b}
-                  onChange={handleInputChange}
-                  placeholder="Paste HTML for Competitor..."
-                  className="h-48 font-mono text-xs"
-                />
+                <div>
+                  <Label htmlFor="product_name_b" className="font-semibold">
+                    Competitor's Product (B)
+                  </Label>
+                  <Input
+                    id="product_name_b"
+                    name="product_name_b"
+                    value={inputs.product_name_b}
+                    onChange={handleInputChange}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="html_b">Product B HTML</Label>
+                  <Textarea
+                    id="html_b"
+                    name="html_b"
+                    value={inputs.html_b}
+                    onChange={handleInputChange}
+                    placeholder="Paste HTML for Competitor..."
+                    className="h-48 font-mono text-xs mt-1"
+                  />
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-4 mt-6 border-t pt-6">
-              <Button onClick={handleClear} variant="ghost">
+
+            <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t">
+              <Button onClick={handleClear} variant="outline">
                 Clear All
               </Button>
               <Button onClick={handleAnalyze} disabled={loading} size="lg">
                 {loading ? "Analyzing..." : "Analyze & Compare"}
               </Button>
             </div>
+
             {error && (
               <Alert variant="destructive" className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
           </CardContent>
         </Card>
 
-        {loading && <LoadingCarousel status={statusUpdates[0] || null} />}
+        {loading && (
+          <Card className="mb-8">
+            <CardContent className="py-8">
+              <div className="text-center">
+                <FadeTransition
+                  animationKey={statusUpdates[0]?.message || "Processing..."}
+                >
+                  <p className="text-lg font-medium text-gray-700 mb-4">
+                    {statusUpdates[0]?.message || "Processing..."}
+                  </p>
+                </FadeTransition>
+                <div className="bg-gray-200 rounded-full h-2 max-w-md mx-auto">
+                  <div className="bg-blue-600 h-2 rounded-full animate-pulse w-1/3"></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {results && (
           <div className="space-y-8">
+            {/* Comparison Summary Table */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Trophy className="text-blue-500" /> Comparison Summary
+                  <Trophy className="text-blue-500" /> Head-to-Head Comparison
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <RenderMarkdownTable
-                  markdown={results.comparison.summary_table}
+                <ReconciledComparisonTable
+                  productAThemes={results?.product_a?.themes ?? {}}
+                  productBThemes={results?.product_b?.themes ?? {}}
+                  productAName={inputs.product_name_a}
+                  productBName={inputs.product_name_b}
                 />
               </CardContent>
             </Card>
 
+            {/* Strategic Insights */}
             <StrategicInsightsCard
-              insights={results.comparison.strategic_insights}
+              insights={results?.comparison?.strategic_insights}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-              <ProductAnalysisCard analysis={results.product_a} />
-              <ProductAnalysisCard analysis={results.product_b} />
+            {/* Individual Product Analysis */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <ProductAnalysisCard
+                analysis={results.product_a}
+                productName={inputs.product_name_a}
+              />
+              <ProductAnalysisCard
+                analysis={results.product_b}
+                productName={inputs.product_name_b}
+              />
             </div>
 
+            {/* Debug/Raw JSON */}
             <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="json">
-                <AccordionTrigger>View Full JSON Response</AccordionTrigger>
+              <AccordionItem value="debug">
+                <AccordionTrigger>
+                  Debug: View Full JSON Response
+                </AccordionTrigger>
                 <AccordionContent>
-                  <pre className="bg-gray-900 text-white p-4 rounded-md overflow-x-auto text-xs">
-                    {JSON.stringify(results, null, 2)}
-                  </pre>
+                  {results ? (
+                    <pre className="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-xs max-h-96 overflow-y-auto border">
+                      {JSON.stringify(results, null, 2)}
+                    </pre>
+                  ) : (
+                    <div className="p-4 text-gray-500 italic text-center">
+                      No data to display
+                    </div>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
