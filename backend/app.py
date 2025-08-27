@@ -159,7 +159,7 @@ def compare_competitive_endpoint():
 
         logger.info(f"Analyzing {product_name_b}...")
         analysis_b = analyzer.generate_comprehensive_analysis(reviews_b, product_name_b)
-
+        
         # Use the analyzer's comparison method
         logger.info("Generating competitive comparison insights...")
         comparison_results = analyzer.compare_products(analysis_a, analysis_b)

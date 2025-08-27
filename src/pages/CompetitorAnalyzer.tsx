@@ -15,7 +15,7 @@ import {
 
 import { Lightbulb, Trophy, Shield, Star, AlertTriangle } from "lucide-react";
 import { FadeTransition } from "@/components/ui/FadeTransition";
-import { mockApiResponse } from "../data/mockdata";
+
 
 // --- TYPESCRIPT INTERFACES ---
 // Fixed to match the actual backend JSON structure
@@ -704,11 +704,7 @@ const ProductAnalysisCard = ({
   // CHANGED: Safely access nested properties with ?. and provide fallbacks with ??
   const positiveCount =
     analysis?.metrics?.sentiment_distribution?.["positive"] ?? 0;
-  const negativeCount =
-    analysis?.metrics?.sentiment_distribution?.["negative"] ?? 0;
-  const neutralCount =
-    analysis?.metrics?.sentiment_distribution?.["neutral"] ?? 0;
-
+    
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
