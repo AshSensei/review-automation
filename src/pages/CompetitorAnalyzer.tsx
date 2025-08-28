@@ -103,6 +103,7 @@ interface StatusUpdate {
   timestamp: number;
 }
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/";
+
 // Theme reconciliation helper - maps similar themes to common names
 const reconcileThemes = (
   productAThemes: string[],
@@ -166,6 +167,13 @@ const reconcileThemes = (
       "Back Buttons",
       "Paddles",
       "Controls",
+    ],
+     "Value & Price": [
+      "Value and Price",
+      "Value for Money",
+      "Price",
+      "Cost",
+      "Value",
     ],
   };
 
@@ -369,19 +377,24 @@ const ReconciledComparisonTable = ({
   };
 
   const getWinner = (sentimentA: string, sentimentB: string) => {
-    const scoreMap = { positive: 3, neutral: 2, mixed: 1, negative: 0 };
+  // Log the exact inputs being received
+  console.log(`Comparing sentiments: Product A='${sentimentA}', Product B='${sentimentB}'`);
 
-    const safeSentimentA = (sentimentA || "neutral").toLowerCase();
-    const safeSentimentB = (sentimentB || "neutral").toLowerCase();
+  const scoreMap = { positive: 3, neutral: 2, mixed: 1, negative: 0 };
 
-    // The fallback "|| 2" now defaults to the neutral score.
-    const scoreA = scoreMap[safeSentimentA as keyof typeof scoreMap] || 2;
-    const scoreB = scoreMap[safeSentimentB as keyof typeof scoreMap] || 2;
+  const safeSentimentA = (sentimentA || "neutral").toLowerCase();
+  const safeSentimentB = (sentimentB || "neutral").toLowerCase();
 
-    if (scoreA > scoreB) return productAName;
-    if (scoreB > scoreA) return productBName;
-    return "Tie";
-  };
+  const scoreA = scoreMap[safeSentimentA as keyof typeof scoreMap] || 2; // Fallback to neutral's score
+  const scoreB = scoreMap[safeSentimentB as keyof typeof scoreMap] || 2; // Fallback to neutral's score
+
+  // Log the calculated scores
+  console.log(`Calculated scores: Product A=${scoreA}, Product B=${scoreB}`);
+
+  if (scoreA > scoreB) return productAName;
+  if (scoreB > scoreA) return productBName;
+  return "Tie";
+};
 
   if (sharedThemes.length === 0) {
     return (
