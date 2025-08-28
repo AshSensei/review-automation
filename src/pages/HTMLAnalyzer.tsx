@@ -10,7 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useState, useCallback, useEffect} from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   ThumbsUp,
   ThumbsDown,
@@ -20,6 +20,14 @@ import {
   Check,
 } from "lucide-react";
 import { FadeTransition } from "@/components/ui/FadeTransition";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 // Types and Interfaces
 type TokenUsage = {
   total_tokens: number;
@@ -79,7 +87,6 @@ type SentimentDistribution = {
   neutral: number;
 };
 
-
 // --- Main Top-Level Type ---
 
 // Define the (now optional) Metrics type
@@ -101,13 +108,21 @@ type AnalysisResult = {
   issues: Issue[];
   themes: Themes;
   reviews: string[];
-  sentiment: SentimentDistribution; 
+  sentiment: SentimentDistribution;
   summary: string;
-  
+
   // ADD THIS LINE to make metrics optional
-  metrics?: Metrics; 
+  metrics?: Metrics;
 };
 
+const productOptions = [
+  { value: "gaming_controller", label: "Gaming Controller" },
+  { value: "gaming_headset", label: "Gaming Headset" },
+  { value: "keyboard", label: "Keyboard" },
+  { value: "mouse", label: "Mouse" },
+  { value: "laptop", label: "Laptop" },
+  { value: "other", label: "Other" },
+];
 
 type PriorityType = string;
 
@@ -120,7 +135,8 @@ const formatIssueName = (name: string = ""): string => {
 };
 
 const getSentimentColor = (sentiment: string): string => {
-  const colorMap: { [key: string]: string } = { // Add index signature here
+  const colorMap: { [key: string]: string } = {
+    // Add index signature here
     positive: "bg-green-100 text-green-800 border-green-300",
     negative: "bg-red-100 text-red-800 border-red-300",
     mixed: "bg-yellow-100 text-yellow-800 border-yellow-300",
@@ -131,27 +147,26 @@ const getSentimentColor = (sentiment: string): string => {
 
 const getPriorityColor = (priority: PriorityType): string => {
   const lowerPriority = priority.toLowerCase();
-  if (lowerPriority.includes("critical") || lowerPriority.includes("high")) {
-      return "bg-red-100 text-red-800 border-red-300";
-  }
-  else if (lowerPriority.includes("medium")) {
-      return "bg-yellow-100 text-yellow-800 border-yellow-300";
-  }
-  else if (lowerPriority.includes("low")) {
-      return "bg-green-100 text-green-800 border-green-300";
-  }
-  else {
+  if (lowerPriority.includes("critical") || lowerPriority.includes("high")) {
+    return "bg-red-100 text-red-800 border-red-300";
+  } else if (lowerPriority.includes("medium")) {
+    return "bg-yellow-100 text-yellow-800 border-yellow-300";
+  } else if (lowerPriority.includes("low")) {
+    return "bg-green-100 text-green-800 border-green-300";
+  } else {
     return "bg-gray-100 text-gray-800 border-gray-300";
   }
-  
 };
 
 // Helper function to calculate sentiment from themes and issues
 const calculateSentimentFromData = (results: AnalysisResult) => {
   // If sentiment_distribution exists in metrics, use it directly
-   if (results.sentiment && (results.sentiment.positive || results.sentiment.negative)) {
-    return results.sentiment;
-  }
+  if (
+    results.sentiment &&
+    (results.sentiment.positive || results.sentiment.negative)
+  ) {
+    return results.sentiment;
+  }
 
   if (
     results.metrics?.sentiment_distribution &&
@@ -271,9 +286,6 @@ const useStatusCycling = () => {
 
   return { statusUpdates, start, stop, clear };
 };
-
-
-
 
 // LoadingCarousel component
 const LoadingCarousel = ({ status }: { status: StatusUpdate | null }) => {
@@ -803,13 +815,14 @@ const generateReportHTML = (results: AnalysisResult): string => {
 // Main Component
 function HTMLAnalyzer() {
   const [htmlInput, setHtmlInput] = useState("");
+  const [productType, setProductType] = useState<string>("gaming_controller");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     // This line runs when the component mounts
-    document.title = 'HTML Analyzer';
+    document.title = "HTML Analyzer";
   }, []);
   const navigate = useNavigate();
   const handleCopyReport = async () => {
@@ -877,7 +890,7 @@ function HTMLAnalyzer() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           html: htmlInput,
-          product_type: "gaming controller",
+          product_type: productType,
         }),
       });
 
@@ -912,13 +925,23 @@ function HTMLAnalyzer() {
   return (
     <main className="p-8 max-w-4xl mx-auto">
       <header className="mb-6 flex items-center justify-between">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => navigate("/")}
           className="flex items-center gap-2"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
           Back
         </Button>
@@ -932,6 +955,26 @@ function HTMLAnalyzer() {
             <CardTitle>Manual HTML Analyzer</CardTitle>
           </CardHeader>
           <CardContent>
+            <div>
+              <Label
+                htmlFor="product-type-select"
+                className="block text-sm font-medium mb-2"
+              >
+                Select Product Type:
+              </Label>
+              <Select value={productType} onValueChange={setProductType}>
+                <SelectTrigger id="product-type-select">
+                  <SelectValue placeholder="Select a product type..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {productOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-4">
               <div>
                 <Label
