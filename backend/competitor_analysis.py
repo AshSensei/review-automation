@@ -658,22 +658,20 @@ Reviews:
         # --- END OF NEW CONTEXT SECTION ---
 
         prompt = f"""
-        <instructions>
-        You are a product strategy analyst. Your task is to compare two products based on the provided review analysis data.
+            <instructions>
+            You are a product strategy analyst. Your task is to compare two products based on the provided review analysis data.
 
-        **Analysis Data:**
-        {comparison_context}
+            **Analysis Data:**
+            {comparison_context}
 
-        **Your Goal:**
-        Generate a single, valid JSON object with two top-level keys:
-        1. "summary_table": Create a markdown table that compares the sentiment for each shared theme. The columns must be: "Theme", "{name_a} Sentiment", "{name_b} Sentiment", and "Winner". Determine the winner based on the sentiment data provided in the "Shared Theme Sentiments" section.
-        2. "strategic_insights": Create an object containing three keys:
-            - "competitive_advantages": A list of strings detailing {name_a}'s key strengths over {name_b}.
-            - "areas_to_improve": A list of strings identifying {name_a}'s primary weaknesses or disadvantages compared to {name_b}.
-            - "recommendations": A list of actionable recommendation objects for {name_a}, each with "recommendation", "priority" ('high', 'medium', or 'low'), and "impact" keys.
+            **Your Goal:**
+            Generate a single, valid JSON object containing "strategic_insights". This object must contain three keys:
+            1.  "competitive_advantages": A list of strings detailing {name_a}'s key strengths over {name_b}, using the provided data for evidence.
+            2.  "areas_to_improve": A list of strings identifying {name_a}'s primary weaknesses compared to {name_b}.
+            3.  "recommendations": A list of actionable recommendation objects for {name_a}, each with "recommendation", "priority" ('high', 'medium', or 'low'), and "impact" keys.
 
-        Your entire output must be only the JSON object.
-        </instructions>
+            Your entire output must be only the JSON object containing the "strategic_insights" key. Do not create a markdown table.
+            </instructions>
         """
 
         try:
@@ -714,10 +712,11 @@ Reviews:
             "unique_to_product_b": list(
                 set(themes_dict_b.keys()) - set(themes_dict_a.keys())
             ),
+            # This structured data is what the frontend actually uses
             "theme_sentiment_comparison": self._create_theme_sentiment_comparison(
                 analysis_a, analysis_b, shared_themes
             ),
-            "summary_table": comparison_insights.get("summary_table", ""),
+            # The summary_table is gone, and we pull strategic_insights directly
             "strategic_insights": comparison_insights.get("strategic_insights", {}),
         }
 
